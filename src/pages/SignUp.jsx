@@ -1,74 +1,64 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import AuthVisual from "../components/AuthVisual";
 import "../styles/auth.css";
 
 export default function SignUp() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { signup } = useAuth();
+  const navigate   = useNavigate();
 
-  function handleSubmit(e) {
+  const [name,            setName]            = useState("");
+  const [email,           setEmail]           = useState("");
+  const [password,        setPassword]        = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error,           setError]           = useState("");
+  const [loading,         setLoading]         = useState(false);
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    console.log({ name, email, password, confirmPassword });
+    setError("");
+
+    // ── Validations ──
+    if (name.trim().length < 2) {
+      return setError("Please enter your full name.");
+    }
+
+    if (password.length < 6) {
+      return setError("Password must be at least 6 characters.");
+    }
+
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match.");
+    }
+
+    try {
+      setLoading(true);
+      await signup(name.trim(), email, password);
+      navigate("/verify-email"); // بعد الـ signup يروح لصفحة التحقق
+    } catch (err) {
+      // Firebase error codes → رسائل واضحة
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          setError("An account with this email already exists.");
+          break;
+        case "auth/invalid-email":
+          setError("Please enter a valid email address.");
+          break;
+        case "auth/weak-password":
+          setError("Password is too weak. Use at least 6 characters.");
+          break;
+        default:
+          setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="auth-page">
-      <div className="auth-visual">
-        <div className="visual-inner">
-
-          <div className="coach-card">
-            <div className="coach-avatar">🏋️</div>
-            <div className="coach-meta">
-              <div className="coach-name">Coach Bahaa</div>
-              <div className="coach-title">Certified Nutrition & Fitness Coach</div>
-            </div>
-            <div className="coach-stats">
-              <div className="coach-stat">
-                <div className="num">250+</div>
-                <div className="lbl">Active Clients</div>
-              </div>
-              <div className="coach-stat">
-                <div className="num">8</div>
-                <div className="lbl">Years Exp.</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="visual-hero">
-            <h1>Your <span className="accent-text">transformation</span> starts here</h1>
-            <p>Sign up and Bahaa will personally build your plan, schedule your sessions, and activate your account.</p>
-          </div>
-
-          <div className="feature-grid">
-            <div className="feature-card">
-              <div className="fc-icon">🥗</div>
-              <div className="fc-title">Nutrition Plan</div>
-              <div className="fc-sub">Meal tracking</div>
-            </div>
-            <div className="feature-card">
-              <div className="fc-icon">📅</div>
-              <div className="fc-title">Weekly Sessions</div>
-              <div className="fc-sub">Schedule overview</div>
-            </div>
-            <div className="feature-card">
-              <div className="fc-icon">🤖</div>
-              <div className="fc-title">AI Coach</div>
-              <div className="fc-sub">Chat assistant</div>
-            </div>
-          </div>
-
-          <div className="session-preview">
-            <div className="sp-dot"></div>
-            <div className="sp-text">
-              <b>Next Session:</b> Upper Body + Cardio
-            </div>
-            <div className="sp-time">Tomorrow 7:00 AM</div>
-          </div>
-
-        </div>
-      </div>
+      <AuthVisual />
 
       <div className="auth-form-panel">
         <div className="auth-form-box">
@@ -78,14 +68,31 @@ export default function SignUp() {
           </div>
 
           <h2>Create your account</h2>
-          <p className="sub">Start your fitness journey today. <Link to="/login">Already have one? Sign in</Link></p>
+          <p className="sub">
+            Start your fitness journey today.{" "}
+            <Link to="/login">Already have one? Sign in</Link>
+          </p>
+
+          {/* Error message */}
+          {error && (
+            <div className="auth-error">
+              <span>⚠️</span> {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="field-group">
               <label>Full name</label>
               <div className="input-wrap">
                 <span className="input-icon">👤</span>
-                <input type="text" placeholder="John Smith" value={name} onChange={(e) => setName(e.target.value)} required />
+                <input
+                  type="text"
+                  placeholder="John Smith"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -93,7 +100,14 @@ export default function SignUp() {
               <label>Email address</label>
               <div className="input-wrap">
                 <span className="input-icon">✉️</span>
-                <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -101,7 +115,14 @@ export default function SignUp() {
               <label>Password</label>
               <div className="input-wrap">
                 <span className="input-icon">🔒</span>
-                <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <input
+                  type="password"
+                  placeholder="Min. 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -109,11 +130,25 @@ export default function SignUp() {
               <label>Confirm password</label>
               <div className="input-wrap">
                 <span className="input-icon">🔒</span>
-                <input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
-            <button type="submit" className="auth-submit-btn" style={{ marginTop: "4px" }}>Create Account</button>
+            <button
+              type="submit"
+              className="auth-submit-btn"
+              disabled={loading}
+              style={{ marginTop: "4px" }}
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
           </form>
 
           <div className="helper-text">

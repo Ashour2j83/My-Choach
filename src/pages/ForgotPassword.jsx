@@ -1,73 +1,46 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../firebase/config";
+import AuthVisual from "../components/AuthVisual";
 import "../styles/auth.css";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [email,   setEmail]   = useState("");
+  const [sent,    setSent]    = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    console.log({ email });
-    setSent(true);
+    setError("");
+
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, email);
+      setSent(true);
+    } catch (err) {
+      switch (err.code) {
+        case "auth/user-not-found":
+          setError("No account found with this email.");
+          break;
+        case "auth/invalid-email":
+          setError("Please enter a valid email address.");
+          break;
+        case "auth/too-many-requests":
+          setError("Too many attempts. Please wait a few minutes.");
+          break;
+        default:
+          setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="auth-page">
-      <div className="auth-visual">
-        <div className="visual-inner">
-
-          <div className="coach-card">
-            <div className="coach-avatar">🏋️</div>
-            <div className="coach-meta">
-              <div className="coach-name">Coach Bahaa</div>
-              <div className="coach-title">Certified Nutrition & Fitness Coach</div>
-            </div>
-            <div className="coach-stats">
-              <div className="coach-stat">
-                <div className="num">250+</div>
-                <div className="lbl">Active Clients</div>
-              </div>
-              <div className="coach-stat">
-                <div className="num">8</div>
-                <div className="lbl">Years Exp.</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="visual-hero">
-            <h1>Don't worry, <span className="accent-text">we got you</span></h1>
-            <p>Reset your password and get straight back to your plan, your sessions, and your progress with Bahaa.</p>
-          </div>
-
-          <div className="feature-grid">
-            <div className="feature-card">
-              <div className="fc-icon">🥗</div>
-              <div className="fc-title">Nutrition Plan</div>
-              <div className="fc-sub">Meal tracking</div>
-            </div>
-            <div className="feature-card">
-              <div className="fc-icon">📅</div>
-              <div className="fc-title">Weekly Sessions</div>
-              <div className="fc-sub">Schedule overview</div>
-            </div>
-            <div className="feature-card">
-              <div className="fc-icon">🤖</div>
-              <div className="fc-title">AI Coach</div>
-              <div className="fc-sub">Chat assistant</div>
-            </div>
-          </div>
-
-          <div className="session-preview">
-            <div className="sp-dot"></div>
-            <div className="sp-text">
-              <b>Next Session:</b> Upper Body + Cardio
-            </div>
-            <div className="sp-time">Tomorrow 7:00 AM</div>
-          </div>
-
-        </div>
-      </div>
+      <AuthVisual />
 
       <div className="auth-form-panel">
         <div className="auth-form-box">
@@ -80,9 +53,15 @@ export default function ForgotPassword() {
             <>
               <h2>Forgot your password?</h2>
               <p className="sub">
-                No worries, enter your email and we'll send you a reset link.{" "}
+                Enter your email and we'll send you a reset link.{" "}
                 <Link to="/login">Back to sign in</Link>
               </p>
+
+              {error && (
+                <div className="auth-error">
+                  <span>⚠️</span> {error}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit}>
                 <div className="field-group">
@@ -95,29 +74,60 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
-                <button type="submit" className="auth-submit-btn">
-                  Send Reset Link
+                <button
+                  type="submit"
+                  className="auth-submit-btn"
+                  disabled={loading}
+                >
+                  {loading ? "Sending..." : "Send Reset Link"}
                 </button>
               </form>
 
               <div className="helper-text">
                 <span className="ht-icon">ℹ️</span>
-                The reset link will expire in 15 minutes
+                The reset link expires in 15 minutes
               </div>
             </>
           ) : (
             <>
-              <h2>Check your inbox</h2>
+              <h2>Check your inbox 📬</h2>
               <p className="sub">
-                We've sent a password reset link to <b>{email}</b>. Didn't get it?{" "}
-                <a href="#" onClick={(e) => { e.preventDefault(); handleSubmit(e); }}>Resend</a>
+                We sent a reset link to{" "}
+                <b style={{ color: "#f5f0ec" }}>{email}</b>.
               </p>
 
-              <Link to="/login" className="auth-submit-btn" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+              <div className="auth-notice verify" style={{ marginTop: "8px" }}>
+                <div className="notice-icon">✉️</div>
+                <div className="notice-body">
+                  <div className="notice-title">Reset link sent!</div>
+                  <div className="notice-sub">
+                    Open the email from Firebase and follow the link to set a new password.
+                    The link expires in <b>15 minutes</b>.
+                  </div>
+                  <button
+                    className="notice-resend"
+                    onClick={() => setSent(false)}
+                  >
+                    Wrong email? Try again →
+                  </button>
+                </div>
+              </div>
+
+              <Link
+                to="/login"
+                className="auth-submit-btn"
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  textDecoration: "none",
+                  marginTop: "16px",
+                }}
+              >
                 Back to Sign In
               </Link>
             </>

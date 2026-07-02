@@ -16,24 +16,25 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);       // Firebase Auth user object
-  const [userData, setUserData] = useState(null); // Firestore document (isActive, role, etc.)
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]         = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading]   = useState(true);
 
   // ── SIGN UP ──
-  async function signup(email, password, name) {
+  async function signup(name, email, password) {
+    // 1. إنشاء الحساب في Firebase Auth
     const result = await createUserWithEmailAndPassword(auth, email, password);
 
-    // Save extra info in Firestore — separate from Auth
+    // 2. حفظ البيانات في Firestore
     await setDoc(doc(db, "users", result.user.uid), {
       name,
       email,
-      isActive: false,        // coach has to activate manually
-      role: "client",
+      status:    "inactive",   // الكوتش لازم يفعّله يدوي
+      role:      "user",
       createdAt: serverTimestamp(),
     });
 
-    // Send verification email
+    // 3. بعت إيميل التحقق
     await sendEmailVerification(result.user);
 
     return result;
@@ -49,14 +50,14 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   }
 
-  // ── RESEND VERIFICATION EMAIL ──
+  // ── RESEND VERIFICATION ──
   async function resendVerification() {
     if (auth.currentUser) {
       await sendEmailVerification(auth.currentUser);
     }
   }
 
-  // ── FETCH FIRESTORE USER DATA ──
+  // ── GET USER DATA FROM FIRESTORE ──
   async function fetchUserData(uid) {
     const snap = await getDoc(doc(db, "users", uid));
     if (snap.exists()) {
@@ -66,14 +67,14 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // ── LISTEN FOR AUTH STATE CHANGES ──
+  // ── LISTEN TO AUTH STATE ──
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
-        await currentUser.reload();          // refresh emailVerified status
-        await fetchUserData(currentUser.uid); // get isActive, role, etc.
+        await currentUser.reload();           // refresh emailVerified
+        await fetchUserData(currentUser.uid); // جيب status و role
       } else {
         setUserData(null);
       }
@@ -87,6 +88,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     userData,
+    loading,
     signup,
     login,
     logout,
