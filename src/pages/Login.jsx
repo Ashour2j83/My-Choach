@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/config";
-import AuthVisual from "../components/AuthVisual";
 import "../styles/auth.css";
 
 export default function Login() {
@@ -33,14 +32,11 @@ export default function Login() {
     try {
       setLoading(true);
 
-      // 1. Login
       const result = await login(email, password);
       const firebaseUser = result.user;
 
-      // 2. Refresh token عشان emailVerified يتحدث
       await firebaseUser.reload();
 
-      // 3. Check email verified
       if (!firebaseUser.emailVerified) {
         await logout();
         setError({ type: "verify" });
@@ -48,22 +44,17 @@ export default function Login() {
         return;
       }
 
-      // 4. Get role from Firestore
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));
 
       if (!snap.exists()) {
         await logout();
-        setError({
-          type: "generic",
-          message: "Account not found. Please sign up again.",
-        });
+        setError({ type: "generic", message: "Account not found. Please sign up again." });
         setLoading(false);
         return;
       }
 
       const userData = snap.data();
 
-      // 5. Route by role — status check هيتعمل جوه الصفحة نفسها
       if (userData.role === "admin") {
         navigate("/admin");
       } else {
@@ -92,24 +83,55 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-page">
-      <AuthVisual />
+    <div className="auth-bg">
+      <div className="auth-card">
 
-      <div className="auth-form-panel">
-        <div className="auth-form-box">
+        {/* ── TOP: gym photo ── */}
+        <div className="card-top">
+          <div className="card-top-inner">
 
-          <div className="form-brand">
-            <div className="form-brand-icon">🏋️</div>
-            <div className="form-brand-name">GymCoach</div>
+            <div className="ct-brand">
+              <div className="ct-brand-icon">🏋️</div>
+              <div className="ct-brand-name">GymCoach</div>
+            </div>
+
+            <div className="ct-tagline">
+              Your <span className="accent">transformation</span> starts here
+            </div>
+            <div className="ct-desc">
+              Everything Bahaa built for you — waiting on the other side.
+            </div>
+
+            <div className="ct-coach">
+              <div className="ct-coach-av">🏋️</div>
+              <div className="ct-coach-info">
+                <div className="ct-coach-name">Coach Bahaa</div>
+                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
+              </div>
+              <div className="ct-coach-stats">
+                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
+                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
+              </div>
+            </div>
+
+            <div className="ct-pills">
+              <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
+              <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
+              <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
+            </div>
+
           </div>
+        </div>
 
-          <h2>Welcome back</h2>
-          <p className="sub">
+        {/* ── FORM ── */}
+        <div className="card-form">
+          <div className="cf-title">Welcome back</div>
+          <div className="cf-sub">
             Back to your fitness journey.{" "}
             <Link to="/signup">New here? Sign up</Link>
-          </p>
+          </div>
 
-          {/* ── NOT VERIFIED ── */}
+          {/* Not verified */}
           {error?.type === "verify" && (
             <div className="auth-notice verify">
               <div className="notice-icon">📩</div>
@@ -129,7 +151,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* ── GENERIC ERROR ── */}
+          {/* Generic error */}
           {error?.type === "generic" && (
             <div className="auth-error">
               <span>⚠️</span> {error.message}
@@ -171,21 +193,16 @@ export default function Login() {
               <Link to="/forgot-password">Forgot password?</Link>
             </div>
 
-            <button
-              type="submit"
-              className="auth-submit-btn"
-              disabled={loading}
-            >
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="helper-text">
-            <span className="ht-icon">ℹ️</span>
-            Your coach will activate your account after signup
+            ℹ️ Your coach will activate your account after signup
           </div>
-
         </div>
+
       </div>
     </div>
   );

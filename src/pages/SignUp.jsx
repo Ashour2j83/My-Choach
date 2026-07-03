@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import AuthVisual from "../components/AuthVisual";
 import "../styles/auth.css";
 
 export default function SignUp() {
@@ -19,25 +18,15 @@ export default function SignUp() {
     e.preventDefault();
     setError("");
 
-    // ── Validations ──
-    if (name.trim().length < 2) {
-      return setError("Please enter your full name.");
-    }
-
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters.");
-    }
-
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
-    }
+    if (name.trim().length < 2) return setError("Please enter your full name.");
+    if (password.length < 6)    return setError("Password must be at least 6 characters.");
+    if (password !== confirmPassword) return setError("Passwords do not match.");
 
     try {
       setLoading(true);
       await signup(name.trim(), email, password);
-      navigate("/verify-email"); // بعد الـ signup يروح لصفحة التحقق
+      navigate("/verify-email");
     } catch (err) {
-      // Firebase error codes → رسائل واضحة
       switch (err.code) {
         case "auth/email-already-in-use":
           setError("An account with this email already exists.");
@@ -57,23 +46,54 @@ export default function SignUp() {
   }
 
   return (
-    <div className="auth-page">
-      <AuthVisual />
+    <div className="auth-bg">
+      <div className="auth-card">
 
-      <div className="auth-form-panel">
-        <div className="auth-form-box">
-          <div className="form-brand">
-            <div className="form-brand-icon">🏋️</div>
-            <div className="form-brand-name">GymCoach</div>
+        {/* ── TOP: gym photo ── */}
+        <div className="card-top">
+          <div className="card-top-inner">
+
+            <div className="ct-brand">
+              <div className="ct-brand-icon">🏋️</div>
+              <div className="ct-brand-name">GymCoach</div>
+            </div>
+
+            <div className="ct-tagline">
+              Your <span className="accent">transformation</span> starts here
+            </div>
+            <div className="ct-desc">
+              Sign up and Bahaa will personally build your plan and activate your account.
+            </div>
+
+            <div className="ct-coach">
+              <div className="ct-coach-av">🏋️</div>
+              <div className="ct-coach-info">
+                <div className="ct-coach-name">Coach Bahaa</div>
+                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
+              </div>
+              <div className="ct-coach-stats">
+                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
+                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
+              </div>
+            </div>
+
+            <div className="ct-pills">
+              <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
+              <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
+              <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
+            </div>
+
           </div>
+        </div>
 
-          <h2>Create your account</h2>
-          <p className="sub">
+        {/* ── FORM ── */}
+        <div className="card-form">
+          <div className="cf-title">Create your account</div>
+          <div className="cf-sub">
             Start your fitness journey today.{" "}
             <Link to="/login">Already have one? Sign in</Link>
-          </p>
+          </div>
 
-          {/* Error message */}
           {error && (
             <div className="auth-error">
               <span>⚠️</span> {error}
@@ -152,10 +172,10 @@ export default function SignUp() {
           </form>
 
           <div className="helper-text">
-            <span className="ht-icon">ℹ️</span>
-            Your coach will activate your account after signup
+            ℹ️ Your coach will activate your account after signup
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase/config";
-import AuthVisual from "../components/AuthVisual";
 import "../styles/auth.css";
 
 export default function ForgotPassword() {
@@ -39,23 +38,55 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="auth-page">
-      <AuthVisual />
+    <div className="auth-bg">
+      <div className="auth-card">
 
-      <div className="auth-form-panel">
-        <div className="auth-form-box">
-          <div className="form-brand">
-            <div className="form-brand-icon">🏋️</div>
-            <div className="form-brand-name">GymCoach</div>
+        {/* ── TOP: gym photo ── */}
+        <div className="card-top">
+          <div className="card-top-inner">
+
+            <div className="ct-brand">
+              <div className="ct-brand-icon">🏋️</div>
+              <div className="ct-brand-name">GymCoach</div>
+            </div>
+
+            <div className="ct-tagline">
+              Don't worry, <span className="accent">we got you</span>
+            </div>
+            <div className="ct-desc">
+              Reset your password and get straight back to your plan and sessions.
+            </div>
+
+            <div className="ct-coach">
+              <div className="ct-coach-av">🏋️</div>
+              <div className="ct-coach-info">
+                <div className="ct-coach-name">Coach Bahaa</div>
+                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
+              </div>
+              <div className="ct-coach-stats">
+                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
+                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
+              </div>
+            </div>
+
+            <div className="ct-pills">
+              <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
+              <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
+              <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
+            </div>
+
           </div>
+        </div>
 
+        {/* ── FORM ── */}
+        <div className="card-form">
           {!sent ? (
             <>
-              <h2>Forgot your password?</h2>
-              <p className="sub">
-                Enter your email and we'll send you a reset link.{" "}
+              <div className="cf-title">Forgot your password?</div>
+              <div className="cf-sub">
+                Enter your email and we'll send a reset link.{" "}
                 <Link to="/login">Back to sign in</Link>
-              </p>
+              </div>
 
               {error && (
                 <div className="auth-error">
@@ -79,27 +110,22 @@ export default function ForgotPassword() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="auth-submit-btn"
-                  disabled={loading}
-                >
+                <button type="submit" className="auth-submit-btn" disabled={loading}>
                   {loading ? "Sending..." : "Send Reset Link"}
                 </button>
               </form>
 
               <div className="helper-text">
-                <span className="ht-icon">ℹ️</span>
-                The reset link expires in 15 minutes
+                ℹ️ The reset link expires in 15 minutes
               </div>
             </>
           ) : (
             <>
-              <h2>Check your inbox 📬</h2>
-              <p className="sub">
+              <div className="cf-title">Check your inbox 📬</div>
+              <div className="cf-sub">
                 We sent a reset link to{" "}
-                <b style={{ color: "#f5f0ec" }}>{email}</b>.
-              </p>
+                <b style={{ color: "#f0ebe6" }}>{email}</b>.
+              </div>
 
               <div className="auth-notice verify" style={{ marginTop: "8px" }}>
                 <div className="notice-icon">✉️</div>
@@ -109,10 +135,7 @@ export default function ForgotPassword() {
                     Open the email from Firebase and follow the link to set a new password.
                     The link expires in <b>15 minutes</b>.
                   </div>
-                  <button
-                    className="notice-resend"
-                    onClick={() => setSent(false)}
-                  >
+                  <button className="notice-resend" onClick={() => setSent(false)}>
                     Wrong email? Try again →
                   </button>
                 </div>
@@ -121,18 +144,14 @@ export default function ForgotPassword() {
               <Link
                 to="/login"
                 className="auth-submit-btn"
-                style={{
-                  display: "block",
-                  textAlign: "center",
-                  textDecoration: "none",
-                  marginTop: "16px",
-                }}
+                style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: "16px" }}
               >
                 Back to Sign In
               </Link>
             </>
           )}
         </div>
+
       </div>
     </div>
   );
