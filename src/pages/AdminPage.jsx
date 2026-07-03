@@ -9,8 +9,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import UserEditorModal from "../components/Usereditormodal";
-import PlanEditorModal from "../components/PlanEditorModal";
-import AddClientModal from "../components/AddClientModal";
+import PlanEditorModal from "../components/PlaneditorModal";
+import AddClientModal from "../components/AddclientModal";
 import "../styles/dashboard.css";
 
 const NAV_ITEMS = [
