@@ -6,21 +6,15 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
 
   if (loading) return null;
 
-  // مش logged in
+  // مش عامل Login
   if (!user) return <Navigate to="/login" replace />;
 
-  // email مش verified → login
+  // الإيميل مش متفعل
   if (!user.emailVerified) return <Navigate to="/login" replace />;
 
-  // admin route بس user عادي بيدخله
+  // User عادي حاول يدخل صفحة الأدمن
   if (adminOnly && userData?.role !== "admin") {
     return <Navigate to="/" replace />;
   }
-
-  // user بيحاول يدخل /admin
-  if (!adminOnly && userData?.role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
-
   return children;
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from "../firebase/config.js";
 
 // Creates a new document in "users". In production this normally runs
 // right after Firebase Auth creates the account, using the returned
@@ -10,15 +10,15 @@ import { db } from "../firebase/config";
 
 export default function AddClientModal({ onClose, onCreated }) {
   const [uid, setUid] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [goal, setGoal] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   async function handleCreate() {
-    if (!fullName.trim() || !email.trim()) {
-      setError("Full name and email are required.");
+    if (!name.trim() || !email.trim()) {
+      setError("Name and email are required.");
       return;
     }
     setSaving(true);
@@ -27,7 +27,7 @@ export default function AddClientModal({ onClose, onCreated }) {
       const id = uid.trim() || crypto.randomUUID();
       const userRef = doc(db, "users", id);
       await setDoc(userRef, {
-        fullName,
+        name,
         email,
         goal,
         status: "active",
@@ -72,11 +72,11 @@ export default function AddClientModal({ onClose, onCreated }) {
               />
             </div>
             <div className="field">
-              <label className="field-label">Full name</label>
+              <label className="field-label">Name</label>
               <input
                 className="field-input"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Laila Adel"
               />
             </div>

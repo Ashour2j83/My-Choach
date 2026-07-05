@@ -7,16 +7,19 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../firebase/config";
+
+import { db } from "../firebase/config.js";
 import UserEditorModal from "../components/Usereditormodal";
 import PlanEditorModal from "../components/Planeditormodal";
 import AddClientModal from "../components/Addclientmodal";
+import WeightHistoryModal from "../components/WieghtHistoryModal.jsx";
 import "../styles/dashboard.css";
 
 const NAV_ITEMS = [
   { key: "overview", icon: "⊞", label: "Overview" },
   { key: "clients", icon: "👥", label: "Clients" },
   { key: "plans", icon: "🥗", label: "Nutrition Plans" },
+  { key: "weight", icon: "⚖️", label: "Weight History" },
   { key: "requests", icon: "🔔", label: "Requests" },
 ];
 
@@ -43,9 +46,16 @@ export default function AdminDashboard() {
 
   const [editingUser, setEditingUser] = useState(null); // profile modal
   const [planUser, setPlanUser] = useState(null); // nutrition plan modal
+  const [weightUser, setWeightUser] = useState(null); // weight history modal
   const [showAddClient, setShowAddClient] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [search, setSearch] = useState("");
+
+  function goTo(viewKey) {
+    setActiveView(viewKey);
+    setMobileNavOpen(false);
+  }
 
   // Real-time listener on "users"
   useEffect(() => {
@@ -98,7 +108,7 @@ export default function AdminDashboard() {
     const s = search.toLowerCase();
     return users.filter(
       (u) =>
-        (u.fullName || "").toLowerCase().includes(s) ||
+        (u.name || "").toLowerCase().includes(s) ||
         (u.email || "").toLowerCase().includes(s)
     );
   }, [users, search]);
@@ -113,11 +123,25 @@ export default function AdminDashboard() {
 
   return (
     <div className="dash-layout">
+      {/* Mobile drawer backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
       {/* ── SIDEBAR ── */}
-      <aside className="dash-sidebar">
+      <aside className={`dash-sidebar ${mobileNavOpen ? "open" : ""}`}>
         <div className="sidebar-brand">
           <div className="sidebar-brand-icon">🏋️</div>
           <div className="sidebar-brand-name">GymCoach</div>
+          <button
+            className="sidebar-mobile-close"
+            onClick={() => setMobileNavOpen(false)}
+          >
+            ✕
+          </button>
         </div>
 
         <span className="sidebar-section-label">Coach Panel</span>
@@ -126,21 +150,11 @@ export default function AdminDashboard() {
             <button
               key={item.key}
               className={`nav-item ${activeView === item.key ? "active" : ""}`}
-              onClick={() => setActiveView(item.key)}
+              onClick={() => goTo(item.key)}
             >
               <span className="nav-icon">{item.icon}</span> {item.label}
-              {item.key === "requests" && pendingUsers.length > 0 && (
-                <span className="nav-badge amber">{pendingUsers.length}</span>
-              )}
             </button>
           ))}
-        </nav>
-
-        <span className="sidebar-section-label">Account</span>
-        <nav className="sidebar-nav">
-          <button className="nav-item">
-            <span className="nav-icon">⚙️</span> Settings
-          </button>
         </nav>
 
         <div className="sidebar-spacer" />
@@ -160,17 +174,32 @@ export default function AdminDashboard() {
       <div className="dash-main">
         <div className="dash-topbar">
           <div className="topbar-left">
-            <div className="topbar-title">
-              {NAV_ITEMS.find((n) => n.key === activeView)?.label ?? "Overview"}
-            </div>
-            <div className="topbar-sub">
-              {users.length} client{users.length === 1 ? "" : "s"} · live from Firestore
+            <button
+              className="topbar-menu-btn"
+              onClick={() => setMobileNavOpen(true)}
+              title="Menu"
+            >
+              ☰
+            </button>
+            <div className="topbar-left-text">
+              <div className="topbar-title">
+                {NAV_ITEMS.find((n) => n.key === activeView)?.label ?? "Overview"}
+              </div>
+              <div className="topbar-sub">
+                {users.length} client{users.length === 1 ? "" : "s"} · live from Firestore
+              </div>
             </div>
           </div>
           <div className="topbar-actions">
-            <button className="topbar-icon-btn" title="Notifications">🔔</button>
+            <button
+              className="topbar-icon-btn"
+              title="Home"
+              onClick={() => (window.location.href = "/")}
+            >
+              🏠
+            </button>
             <button className="topbar-btn" onClick={() => setShowAddClient(true)}>
-              + Add Client
+              + <span className="btn-text-full">Add Client</span>
             </button>
           </div>
         </div>
@@ -187,6 +216,7 @@ export default function AdminDashboard() {
               planIds={planIds}
               onOpenUser={setEditingUser}
               onOpenPlan={setPlanUser}
+              onOpenWeight={setWeightUser}
               onApprove={(id) => setStatus(id, "active")}
               onReject={(id) => setStatus(id, "inactive")}
             />
@@ -201,6 +231,7 @@ export default function AdminDashboard() {
               planIds={planIds}
               onOpenUser={setEditingUser}
               onOpenPlan={setPlanUser}
+              onOpenWeight={setWeightUser}
             />
           )}
 
@@ -213,11 +244,11 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeView === "requests" && (
-            <RequestsView
-              pendingUsers={pendingUsers}
-              onApprove={(id) => setStatus(id, "active")}
-              onReject={(id) => setStatus(id, "inactive")}
+          {activeView === "weight" && (
+            <WeightPickerView
+              users={users}
+              usersLoading={usersLoading}
+              onOpenWeight={setWeightUser}
             />
           )}
         </div>
@@ -231,6 +262,9 @@ export default function AdminDashboard() {
       )}
       {planUser && (
         <PlanEditorModal user={planUser} onClose={() => setPlanUser(null)} />
+      )}
+      {weightUser && (
+        <WeightHistoryModal user={weightUser} onClose={() => setWeightUser(null)} />
       )}
       {showAddClient && (
         <AddClientModal onClose={() => setShowAddClient(false)} />
@@ -250,6 +284,7 @@ function Overview({
   planIds,
   onOpenUser,
   onOpenPlan,
+  onOpenWeight,
   onApprove,
   onReject,
 }) {
@@ -272,7 +307,7 @@ function Overview({
               <div key={p.id} className="pending-item">
                 <div className="pending-av">👤</div>
                 <div className="pending-info">
-                  <div className="pending-name">{p.fullName || "Unnamed client"}</div>
+                  <div className="pending-name">{p.name || "Unnamed client"}</div>
                   <div className="pending-meta">{p.email} · {p.goal || "No goal set"}</div>
                 </div>
                 <div className="pending-btns">
@@ -295,6 +330,7 @@ function Overview({
           planIds={planIds}
           onOpenUser={onOpenUser}
           onOpenPlan={onOpenPlan}
+          onOpenWeight={onOpenWeight}
         />
       </div>
     </>
@@ -317,7 +353,7 @@ function StatCard({ icon, cls, badge, badgeType, num, label }) {
 /* ============================================================
    CLIENTS
    ============================================================ */
-function ClientsView({ users, usersLoading, search, setSearch, planIds, onOpenUser, onOpenPlan }) {
+function ClientsView({ users, usersLoading, search, setSearch, planIds, onOpenUser, onOpenPlan, onOpenWeight }) {
   return (
     <div className="dash-card">
       <div className="card-header">
@@ -336,12 +372,13 @@ function ClientsView({ users, usersLoading, search, setSearch, planIds, onOpenUs
         planIds={planIds}
         onOpenUser={onOpenUser}
         onOpenPlan={onOpenPlan}
+        onOpenWeight={onOpenWeight}
       />
     </div>
   );
 }
 
-function ClientsTable({ users, loading, planIds, onOpenUser, onOpenPlan }) {
+function ClientsTable({ users, loading, planIds, onOpenUser, onOpenPlan, onOpenWeight }) {
   if (loading) return <div className="loading-row">Loading clients…</div>;
   if (users.length === 0)
     return (
@@ -352,60 +389,73 @@ function ClientsTable({ users, loading, planIds, onOpenUser, onOpenPlan }) {
     );
 
   return (
-    <table className="clients-table">
-      <thead>
-        <tr>
-          <th>Client</th>
-          <th>Status</th>
-          <th>Sessions left</th>
-          <th>Joined</th>
-          <th>Plan</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((u, i) => (
-          <tr key={u.id} onClick={() => onOpenUser(u)}>
-            <td>
-              <div className="client-cell">
-                <div className={`client-av ${AV_CLASSES[i % AV_CLASSES.length]}`}>
-                  {initialsOf(u.fullName)}
-                </div>
-                <div>
-                  <div className="client-name">{u.fullName || "Unnamed"}</div>
-                  <div className="client-email">{u.email}</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              <span className={`status-chip ${u.status || "active"}`}>
-                {(u.status || "active").charAt(0).toUpperCase() + (u.status || "active").slice(1)}
-              </span>
-            </td>
-            <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>
-              {u.remainingSessions ?? 0}
-            </td>
-            <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtDate(u.createdAt)}</td>
-            <td>
-              <span className={`plan-doc-flag ${planIds.has(u.id) ? "exists" : "missing"}`}>
-                {planIds.has(u.id) ? "Has plan" : "No plan"}
-              </span>
-            </td>
-            <td>
-              <button
-                className="btn-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenPlan(u);
-                }}
-              >
-                Plan
-              </button>
-            </td>
+    <div className="table-scroll">
+      <table className="clients-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Sessions left</th>
+            <th>Joined</th>
+            <th>Plan</th>
+            <th></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {users.map((u, i) => (
+            <tr key={u.id} onClick={() => onOpenUser(u)}>
+              <td>
+                <div className="client-cell">
+                  <div className={`client-av ${AV_CLASSES[i % AV_CLASSES.length]}`}>
+                    {initialsOf(u.name)}
+                  </div>
+                  <div>
+                    <div className="client-name">{u.name || "Unnamed"}</div>
+                    <div className="client-email">{u.email}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span className={`status-chip ${u.status || "active"}`}>
+                  {(u.status || "active").charAt(0).toUpperCase() + (u.status || "active").slice(1)}
+                </span>
+              </td>
+              <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+                {u.remainingSessions ?? 0}
+              </td>
+              <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtDate(u.createdAt)}</td>
+              <td>
+                <span className={`plan-doc-flag ${planIds.has(u.id) ? "exists" : "missing"}`}>
+                  {planIds.has(u.id) ? "Has plan" : "No plan"}
+                </span>
+              </td>
+              <td>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    className="btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenPlan(u);
+                    }}
+                  >
+                    Plan
+                  </button>
+                  <button
+                    className="btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenWeight(u);
+                    }}
+                  >
+                    Weight
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -434,9 +484,9 @@ function PlansView({ users, usersLoading, planIds, onOpenPlan }) {
               onClick={() => onOpenPlan(u)}
               style={{ cursor: "pointer" }}
             >
-              <div className="client-av">{initialsOf(u.fullName)}</div>
+              <div className="client-av">{initialsOf(u.name)}</div>
               <div>
-                <div className="client-name">{u.fullName || "Unnamed"}</div>
+                <div className="client-name">{u.name || "Unnamed"}</div>
                 <div className="client-email">{u.email}</div>
               </div>
               <span className={`plan-doc-flag ${planIds.has(u.id) ? "exists" : "missing"}`}>
@@ -451,31 +501,34 @@ function PlansView({ users, usersLoading, planIds, onOpenPlan }) {
 }
 
 /* ============================================================
-   REQUESTS
+   WEIGHT HISTORY (picker)
    ============================================================ */
-function RequestsView({ pendingUsers, onApprove, onReject }) {
+function WeightPickerView({ users, usersLoading, onOpenWeight }) {
+  if (usersLoading) return <div className="dash-card"><div className="loading-row">Loading clients…</div></div>;
+
   return (
     <div className="dash-card">
       <div className="card-header">
-        <div className="card-title">🔔 Pending Requests</div>
+        <div className="card-title">⚖️ Select a client to view their weight history</div>
       </div>
-      {pendingUsers.length === 0 ? (
+      {users.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">✅</div>
-          No pending requests right now.
+          <div className="empty-state-icon">⚖️</div>
+          No clients yet.
         </div>
       ) : (
-        <div className="pending-list">
-          {pendingUsers.map((p) => (
-            <div key={p.id} className="pending-item">
-              <div className="pending-av">👤</div>
-              <div className="pending-info">
-                <div className="pending-name">{p.fullName || "Unnamed client"}</div>
-                <div className="pending-meta">{p.email} · {p.goal || "No goal set"}</div>
-              </div>
-              <div className="pending-btns">
-                <button className="btn-approve" onClick={() => onApprove(p.id)}>✓ Approve</button>
-                <button className="btn-reject" onClick={() => onReject(p.id)}>✕ Reject</button>
+        <div className="plan-picker-list">
+          {users.map((u) => (
+            <div
+              key={u.id}
+              className="plan-picker-item"
+              onClick={() => onOpenWeight(u)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="client-av">{initialsOf(u.name)}</div>
+              <div>
+                <div className="client-name">{u.name || "Unnamed"}</div>
+                <div className="client-email">{u.email}</div>
               </div>
             </div>
           ))}

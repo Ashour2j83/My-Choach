@@ -6,7 +6,7 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from "../firebase/config.js";
 
 const MEALS = [
   { key: "breakfast", label: "Breakfast", icon: "🍳" },
@@ -30,6 +30,23 @@ const emptyPlan = {
 
 let itemIdCounter = 0;
 const newItemId = () => `item_${Date.now()}_${itemIdCounter++}`;
+
+function num(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function sumMacros(items) {
+  return items.reduce(
+    (acc, it) => ({
+      calories: acc.calories + num(it.calories),
+      protein: acc.protein + num(it.protein),
+      carbs: acc.carbs + num(it.carbs),
+      fats: acc.fats + num(it.fats),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
 
 export default function PlanEditorModal({ user, onClose }) {
   const [plan, setPlan] = useState(emptyPlan);
@@ -90,7 +107,16 @@ export default function PlanEditorModal({ user, onClose }) {
       ...p,
       [mealKey]: [
         ...p[mealKey],
-        { _rowId: newItemId(), food: "", quantity: "", notes: "" },
+        {
+          _rowId: newItemId(),
+          food: "",
+          quantity: "",
+          calories: "",
+          protein: "",
+          carbs: "",
+          fats: "",
+          notes: "",
+        },
       ],
     }));
   }
@@ -158,12 +184,20 @@ export default function PlanEditorModal({ user, onClose }) {
     }
   }
 
+  const dayTotals = sumMacros([
+    ...plan.breakfast,
+    ...plan.snack1,
+    ...plan.lunch,
+    ...plan.snack2,
+    ...plan.dinner,
+  ]);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <div className="modal-title">🥗 {user.fullName || "Client"}'s nutrition plan</div>
+            <div className="modal-title">🥗 {user.name || "Client"}'s nutrition plan</div>
             <div className="modal-sub">
               plans/{user.id} {docExists ? "· existing document" : "· not yet created"}
             </div>
@@ -172,65 +206,142 @@ export default function PlanEditorModal({ user, onClose }) {
         </div>
 
         <div className="modal-body">
+          {!loading && (
+            <div className="day-totals-card">
+              <div className="day-total-chip">
+                <span className="num">{Math.round(dayTotals.calories)}</span>
+                <span className="lbl">Calories</span>
+              </div>
+              <div className="day-total-chip">
+                <span className="num">{Math.round(dayTotals.protein)}g</span>
+                <span className="lbl">Protein</span>
+              </div>
+              <div className="day-total-chip">
+                <span className="num">{Math.round(dayTotals.carbs)}g</span>
+                <span className="lbl">Carbs</span>
+              </div>
+              <div className="day-total-chip">
+                <span className="num">{Math.round(dayTotals.fats)}g</span>
+                <span className="lbl">Fats</span>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="loading-row">Loading plan…</div>
           ) : (
             <>
-              {MEALS.map((meal) => (
-                <div className="meal-block" key={meal.key}>
-                  <div className="meal-block-header">
-                    <div className="meal-block-title">
-                      {meal.icon} {meal.label}
-                      <span className="meal-count">{plan[meal.key].length}</span>
-                    </div>
-                    <button
-                      className="btn-add-item"
-                      onClick={() => addItem(meal.key)}
-                      type="button"
-                    >
-                      + Add food
-                    </button>
-                  </div>
-                  <div className="meal-items">
-                    {plan[meal.key].length === 0 && (
-                      <div className="meal-empty">No items yet</div>
-                    )}
-                    {plan[meal.key].map((item) => (
-                      <div className="meal-item-row" key={item._rowId}>
-                        <input
-                          placeholder="Food"
-                          value={item.food}
-                          onChange={(e) =>
-                            updateItem(meal.key, item._rowId, "food", e.target.value)
-                          }
-                        />
-                        <input
-                          placeholder="Qty"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(meal.key, item._rowId, "quantity", e.target.value)
-                          }
-                        />
-                        <input
-                          placeholder="Notes"
-                          value={item.notes}
-                          onChange={(e) =>
-                            updateItem(meal.key, item._rowId, "notes", e.target.value)
-                          }
-                        />
-                        <button
-                          type="button"
-                          className="btn-remove-item"
-                          onClick={() => removeItem(meal.key, item._rowId)}
-                          title="Remove item"
-                        >
-                          ✕
-                        </button>
+              {MEALS.map((meal) => {
+                const mealTotals = sumMacros(plan[meal.key]);
+                return (
+                  <div className="meal-block" key={meal.key}>
+                    <div className="meal-block-header">
+                      <div className="meal-block-title">
+                        {meal.icon} {meal.label}
+                        <span className="meal-count">{plan[meal.key].length}</span>
                       </div>
-                    ))}
+                      {plan[meal.key].length > 0 && (
+                        <span className="meal-total">
+                          {Math.round(mealTotals.calories)} kcal · P{Math.round(mealTotals.protein)} · C{Math.round(mealTotals.carbs)} · F{Math.round(mealTotals.fats)}
+                        </span>
+                      )}
+                      <button
+                        className="btn-add-item"
+                        onClick={() => addItem(meal.key)}
+                        type="button"
+                      >
+                        + Add food
+                      </button>
+                    </div>
+                    <div className="meal-items">
+                      {plan[meal.key].length === 0 && (
+                        <div className="meal-empty">No items yet</div>
+                      )}
+                      {plan[meal.key].map((item) => (
+                        <div className="food-item-card" key={item._rowId}>
+                          <div className="food-item-top">
+                            <input
+                              placeholder="Food"
+                              value={item.food}
+                              onChange={(e) =>
+                                updateItem(meal.key, item._rowId, "food", e.target.value)
+                              }
+                            />
+                            <input
+                              placeholder="Qty"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                updateItem(meal.key, item._rowId, "quantity", e.target.value)
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="btn-remove-item"
+                              onClick={() => removeItem(meal.key, item._rowId)}
+                              title="Remove item"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <div className="food-item-macros">
+                            <div className="macro-field">
+                              <span className="macro-label">Cal</span>
+                              <input
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={item.calories}
+                                onChange={(e) =>
+                                  updateItem(meal.key, item._rowId, "calories", e.target.value)
+                                }
+                              />
+                            </div>
+                            <div className="macro-field">
+                              <span className="macro-label">Protein g</span>
+                              <input
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={item.protein}
+                                onChange={(e) =>
+                                  updateItem(meal.key, item._rowId, "protein", e.target.value)
+                                }
+                              />
+                            </div>
+                            <div className="macro-field">
+                              <span className="macro-label">Carbs g</span>
+                              <input
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={item.carbs}
+                                onChange={(e) =>
+                                  updateItem(meal.key, item._rowId, "carbs", e.target.value)
+                                }
+                              />
+                            </div>
+                            <div className="macro-field">
+                              <span className="macro-label">Fat g</span>
+                              <input
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={item.fats}
+                                onChange={(e) =>
+                                  updateItem(meal.key, item._rowId, "fats", e.target.value)
+                                }
+                              />
+                            </div>
+                          </div>
+                          <input
+                            placeholder="Notes (optional)"
+                            value={item.notes}
+                            onChange={(e) =>
+                              updateItem(meal.key, item._rowId, "notes", e.target.value)
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="form-section-title">💧 Other plan details</div>
               <div className="form-grid">

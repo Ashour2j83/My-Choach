@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from "../firebase/config.js";
 
 // Fields editable in the profile editor. updateDoc() will create any of
 // these keys on the document if they don't already exist — Firestore
 // merges individual fields on update rather than requiring the doc to
 // already contain them.
 const emptyForm = {
-  fullName: "",
+  name: "",
   email: "",
   age: "",
   height: "",
@@ -20,7 +20,7 @@ const emptyForm = {
 
 export default function UserEditorModal({ user, onClose, onSaved }) {
   const [form, setForm] = useState({
-    fullName: user.fullName ?? "",
+    name: user.name ?? "",
     email: user.email ?? "",
     age: user.age ?? "",
     height: user.height ?? "",
@@ -42,7 +42,7 @@ export default function UserEditorModal({ user, onClose, onSaved }) {
     try {
       const userRef = doc(db, "users", user.id);
       await updateDoc(userRef, {
-        fullName: form.fullName,
+        name: form.name,
         email: form.email,
         age: form.age === "" ? null : Number(form.age),
         height: form.height === "" ? null : Number(form.height),
@@ -79,13 +79,16 @@ export default function UserEditorModal({ user, onClose, onSaved }) {
           <div className="form-section-title">👤 Basic info</div>
           <div className="form-grid">
             <div className="field span-2">
-              <label className="field-label">Full name</label>
+              <label className="field-label">Name</label>
               <input
                 className="field-input"
-                value={form.fullName}
-                onChange={setField("fullName")}
+                value={form.name}
+                onChange={setField("name")}
                 placeholder="e.g. Ahmed Ali"
               />
+              <div style={{ fontSize: 10.5, color: "var(--muted-2)" }}>
+                Editable here — stays in sync with the client's own profile.
+              </div>
             </div>
             <div className="field span-2">
               <label className="field-label">Email</label>
