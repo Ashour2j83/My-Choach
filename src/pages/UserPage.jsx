@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/config";
 import "../styles/user.css";
@@ -9,13 +9,11 @@ const Icon = {
   grid:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
   plan:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>,
   chart:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  book:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
   logout:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   whatsapp:<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.557 4.118 1.529 5.845L.057 23.852l6.185-1.622A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.6a9.6 9.6 0 0 1-4.9-1.344l-.35-.208-3.632.953.97-3.54-.228-.364A9.6 9.6 0 1 1 12 21.6z"/></svg>,
   chevron: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>,
-  scale:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v1M5.636 5.636l.707.707M3 12h1M5.636 18.364l.707-.707M12 21v-1M18.364 18.364l-.707-.707M21 12h-1M18.364 5.636l-.707.707"/><circle cx="12" cy="12" r="4"/></svg>,
-  fire:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c0 0-5 5-5 10a5 5 0 0 0 10 0c0-5-5-10-5-10zM9 16c0 0 1-2 3-2s3 2 3 2"/></svg>,
-  target:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-  ruler:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 6H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"/><path d="M7 6v4M11 6v2M15 6v4M19 6v2"/></svg>,
+  shuffle: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>,
 };
 
 const MEAL_META = {
@@ -50,7 +48,6 @@ function WeightChart({ entries }) {
     date: e.date,
   }));
 
-  // Smooth bezier
   let linePath = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 1; i < pts.length; i++) {
     const prev = pts[i - 1];
@@ -68,13 +65,11 @@ function WeightChart({ entries }) {
   const isDown = diff < 0;
   const color = isDown ? "#00e676" : "#ff6b35";
 
-  // Y-axis ticks
   const yTicks = [max, (max + min) / 2, min].map(v => ({
     y: PAD.t + (1 - (v - min) / (max - min)) * iH,
     label: Math.round(v),
   }));
 
-  // X-axis labels (first, middle if exists, last)
   const xLabels = [pts[0]];
   if (pts.length > 3) xLabels.push(pts[Math.floor(pts.length / 2)]);
   xLabels.push(pts[pts.length - 1]);
@@ -106,7 +101,6 @@ function WeightChart({ entries }) {
           </filter>
         </defs>
 
-        {/* Grid lines + Y labels */}
         {yTicks.map((t, i) => (
           <g key={i}>
             <line x1={PAD.l} y1={t.y} x2={W - PAD.r} y2={t.y}
@@ -118,14 +112,10 @@ function WeightChart({ entries }) {
           </g>
         ))}
 
-        {/* Area */}
         <path d={areaPath} fill="url(#wg)"/>
-
-        {/* Smooth line */}
         <path d={linePath} fill="none" stroke={color} strokeWidth="2.5"
           strokeLinecap="round" strokeLinejoin="round" filter="url(#line-glow)"/>
 
-        {/* Dots */}
         {pts.map((p, i) => {
           const isLast = i === pts.length - 1;
           return (
@@ -139,7 +129,6 @@ function WeightChart({ entries }) {
           );
         })}
 
-        {/* X labels */}
         {xUnique.map((p, i) => (
           <text key={i} x={p.x} y={H - 4} textAnchor="middle"
             fill="rgba(255,255,255,0.22)" fontSize="9" fontFamily="Inter,sans-serif">
@@ -235,6 +224,115 @@ function WeightRow({ entry, prev }) {
   );
 }
 
+/* ── RECIPES (fetched live, 3 at a time, "next" = new random trio) ──── */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function RecipeCard({ recipe }) {
+  const title = recipe.description || recipe.name || "Untitled Recipe";
+  const meal  = recipe.mealType || "";
+
+  return (
+    <div className="recipe-card-u">
+      <div className="recipe-card-u-img">
+        {recipe.image
+          ? <img src={recipe.image} alt={title} onError={e => { e.target.style.display = "none"; }} />
+          : <span>🍽️</span>}
+      </div>
+      <div className="recipe-card-u-body">
+        {meal && <div className="recipe-card-u-meal">{meal}</div>}
+        <div className="recipe-card-u-title">{title}</div>
+        {recipe.ingredients && (
+          <div className="recipe-card-u-ingr">{recipe.ingredients}</div>
+        )}
+        <div className="recipe-card-u-macros">
+          {recipe.calories && <span className="fm cal">{recipe.calories} kcal</span>}
+          {recipe.protein  && <span className="fm prot">P {recipe.protein}g</span>}
+          {recipe.carbs    && <span className="fm carb">C {recipe.carbs}g</span>}
+          {recipe.fat      && <span className="fm fat">F {recipe.fat}g</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecipesSection() {
+  const [recipes, setRecipes] = useState([]);
+  const [order,   setOrder]   = useState([]);
+  const [page,    setPage]    = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "Recipes"), snap => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setRecipes(list);
+      setOrder(shuffle(list.map(r => r.id)));
+      setPage(0);
+      setLoading(false);
+    }, err => { console.error(err); setLoading(false); });
+    return () => unsub();
+  }, []);
+
+  const perPage = 3;
+  const totalPages = Math.max(1, Math.ceil(order.length / perPage));
+
+  function nextThree() {
+    setPage(p => {
+      const n = p + 1;
+      if (n >= totalPages) {
+        setOrder(shuffle(recipes.map(r => r.id)));
+        return 0;
+      }
+      return n;
+    });
+  }
+
+  const visible = order
+    .slice(page * perPage, page * perPage + perPage)
+    .map(id => recipes.find(r => r.id === id))
+    .filter(Boolean);
+
+  if (loading) return <div className="loading-row">Loading recipes…</div>;
+
+  if (recipes.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="es-icon">📖</div>
+        <div className="es-title">No recipes yet</div>
+        <div className="es-sub">Coach Bahaa hasn't added any recipes yet. Check back soon!</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="up-tab-content">
+      <div className="recipes-u-header">
+        <div>
+          <div className="plan-header-title">Recipes</div>
+          <div className="plan-updated">{recipes.length} available</div>
+        </div>
+      </div>
+
+      <div className="recipes-u-grid">
+        {visible.map(r => <RecipeCard key={r.id} recipe={r} />)}
+      </div>
+
+      {recipes.length > 3 && (
+        <button className="recipes-u-next" onClick={nextThree}>
+          <span className="ru-next-icon">{Icon.shuffle}</span>
+          3 more recipes
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ── INACTIVE ─────────────────────────────────────────────────── */
 function InactiveScreen() {
   return (
@@ -311,6 +409,7 @@ export default function UserPage() {
 
   const lastWeight = weights.length ? weights[weights.length - 1] : null;
   const initial    = userData?.name?.charAt(0).toUpperCase() || "U";
+  const firstName  = userData?.name?.split(" ")[0] || "there";
 
   return (
     <div className="up-root">
@@ -324,7 +423,7 @@ export default function UserPage() {
         <div className="up-topbar-right">
           <div className="up-user-chip">
             <div className="up-av">{initial}</div>
-            <span>{userData?.name?.split(" ")[0]}</span>
+            <span>{firstName}</span>
           </div>
           <button className="up-logout" onClick={logout}>{Icon.logout}</button>
         </div>
@@ -335,79 +434,52 @@ export default function UserPage() {
 
         {/* ════════ OVERVIEW ════════ */}
         {tab === "overview" && (
-          <div className="up-tab-content">
+          <div className="up-tab-content" style={{ paddingTop: 0 }}>
 
-            {/* Hero */}
-            <div className="profile-hero">
-              <div className="hero-glow"/>
-              <div className="hero-glow-2"/>
-
-              <div className="hero-main">
-                <div className="hero-av-wrap">
-                  <div className="hero-av-ring">
-                    <div className="hero-av">{initial}</div>
-                  </div>
-                  <div className="hero-status-dot"/>
-                </div>
-                <div className="hero-info">
-                  <div className="hero-name">{userData?.name || "—"}</div>
-                  <div className="hero-email">{userData?.email || "—"}</div>
-                  <div className="hero-badges">
-                    <span className="hero-badge active">✅ Active</span>
-                    {userData?.goal && <span className="hero-badge goal">🎯 {userData.goal}</span>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="hero-quick-stats">
-                <div className="hqs-item">
-                  <div className="hqs-val">
-                    {userData?.currentWeight ?? lastWeight?.weight ?? "—"}
-                    <span className="hqs-unit">kg</span>
-                  </div>
-                  <div className="hqs-lbl">Current</div>
-                </div>
-                <div className="hqs-item">
-                  <div className="hqs-val">
-                    {userData?.targetWeight ?? "—"}
-                    <span className="hqs-unit">kg</span>
-                  </div>
-                  <div className="hqs-lbl">Target</div>
-                </div>
-                <div className="hqs-item">
-                  <div className="hqs-val">{userData?.remainingSessions ?? "—"}</div>
-                  <div className="hqs-lbl">Sessions left</div>
+            {/* Hero photo */}
+            <div className="hero-photo">
+              <img src="/coach.jpg" alt="" className="hero-photo-img" />
+              <div className="hero-photo-content">
+                <div className="hero-greet">Welcome back</div>
+                <div className="hero-photo-name">{firstName} 👋</div>
+                <div className="hero-photo-line">Discipline today, results tomorrow. Keep pushing forward!</div>
+                <div className="hero-photo-badges">
+                  <span className="hero-badge active">⚡ {userData?.remainingSessions ?? 0} Sessions Left</span>
+                  {userData?.goal && <span className="hero-badge goal">🎯 {userData.goal}</span>}
                 </div>
               </div>
             </div>
 
-            {/* Stat cards */}
-            <div className="ov-stats">
-              <div className="ov-stat-card">
-                <div className="osc-accent-line" style={{ background: "linear-gradient(90deg, #00e676, #00bcd4)" }}/>
-                <div className="osc-icon-wrap" style={{ background: "rgba(0,230,118,0.1)", color: "#00e676" }}>{Icon.scale}</div>
-                <div className="osc-val">{userData?.currentWeight ?? lastWeight?.weight ?? "—"}<span className="osc-unit">kg</span></div>
-                <div className="osc-lbl">Current Weight</div>
+            {/* Floating stat strip */}
+            <div className="stat-strip">
+              <div className="stat-chip">
+                <div className="stat-chip-icon">⚖️</div>
+                <div className="stat-chip-val">{userData?.currentWeight ?? lastWeight?.weight ?? "—"}<span className="stat-chip-unit">kg</span></div>
+                <div className="stat-chip-lbl">Current</div>
               </div>
-              <div className="ov-stat-card">
-                <div className="osc-accent-line" style={{ background: "linear-gradient(90deg, #ff6b35, #ff3d71)" }}/>
-                <div className="osc-icon-wrap" style={{ background: "rgba(255,107,53,0.1)", color: "#ff6b35" }}>{Icon.target}</div>
-                <div className="osc-val">{userData?.targetWeight ?? "—"}<span className="osc-unit">kg</span></div>
-                <div className="osc-lbl">Target Weight</div>
+              <div className="stat-chip">
+                <div className="stat-chip-icon">🎯</div>
+                <div className="stat-chip-val">{userData?.targetWeight ?? "—"}<span className="stat-chip-unit">kg</span></div>
+                <div className="stat-chip-lbl">Target</div>
               </div>
-              <div className="ov-stat-card">
-                <div className="osc-accent-line" style={{ background: "linear-gradient(90deg, #4d9fff, #b388ff)" }}/>
-                <div className="osc-icon-wrap" style={{ background: "rgba(77,159,255,0.1)", color: "#4d9fff" }}>{Icon.ruler}</div>
-                <div className="osc-val">{userData?.height ?? "—"}<span className="osc-unit">cm</span></div>
-                <div className="osc-lbl">Height</div>
+              <div className="stat-chip">
+                <div className="stat-chip-icon">📏</div>
+                <div className="stat-chip-val">{userData?.height ?? "—"}<span className="stat-chip-unit">cm</span></div>
+                <div className="stat-chip-lbl">Height</div>
               </div>
-              <div className="ov-stat-card">
-                <div className="osc-accent-line" style={{ background: "linear-gradient(90deg, #ff3d71, #ff6b35)" }}/>
-                <div className="osc-icon-wrap" style={{ background: "rgba(255,61,113,0.1)", color: "#ff3d71" }}>{Icon.fire}</div>
-                <div className="osc-val">{userData?.remainingSessions ?? "—"}</div>
-                <div className="osc-lbl">Sessions Left</div>
+              <div className="stat-chip">
+                <div className="stat-chip-icon">🔥</div>
+                <div className="stat-chip-val">{userData?.remainingSessions ?? "—"}</div>
+                <div className="stat-chip-lbl">Sessions</div>
               </div>
             </div>
+
+            {/* Weight chart */}
+            {weights.length >= 2 && (
+              <div className="chart-card">
+                <WeightChart entries={weights}/>
+              </div>
+            )}
 
             {/* Profile details */}
             <div className="details-card">
@@ -489,6 +561,9 @@ export default function UserPage() {
           </div>
         )}
 
+        {/* ════════ RECIPES (only reachable when active — page already gated above) ════════ */}
+        {tab === "recipes" && <RecipesSection/>}
+
         {/* ════════ PROGRESS ════════ */}
         {tab === "progress" && (
           <div className="up-tab-content">
@@ -551,8 +626,9 @@ export default function UserPage() {
       <nav className="up-bottom-nav">
         <div className="bn-track">
           {[
-            { key: "overview", icon: Icon.grid,  label: "Overview" },
+            { key: "overview", icon: Icon.grid,  label: "Home"     },
             { key: "plan",     icon: Icon.plan,  label: "My Plan"  },
+            { key: "recipes",  icon: Icon.book,  label: "Recipes"  },
             { key: "progress", icon: Icon.chart, label: "Progress" },
           ].map(item => (
             <button
@@ -569,4 +645,4 @@ export default function UserPage() {
 
     </div>
   );
-} 
+}

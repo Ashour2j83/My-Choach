@@ -152,134 +152,110 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .up-tab-content { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
 
 /* ════════════════════════════════
-   HERO SECTION
+   HERO PHOTO
 ════════════════════════════════ */
-.profile-hero {
-  background: var(--s1);
-  border: 1px solid var(--border);
+.hero-photo {
+  position: relative;
+  height: 260px;
   border-radius: 24px;
   overflow: hidden;
-  position: relative;
+  background: var(--s1);
 }
 
-.hero-glow {
+.hero-photo-img {
   position: absolute;
-  width: 260px; height: 260px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,107,53,0.18), transparent 70%);
-  top: -100px; right: -80px;
-  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
 }
 
-.hero-glow-2 {
+.hero-photo::after {
+  content: '';
   position: absolute;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,61,113,0.12), transparent 70%);
-  bottom: -80px; left: -60px;
-  pointer-events: none;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(9,8,13,0) 0%, rgba(9,8,13,0.55) 55%, rgba(9,8,13,0.97) 100%);
 }
 
-.hero-main {
-  position: relative;
+.hero-photo-content {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 18px 20px 20px;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 22px 20px 16px;
 }
 
-.hero-av-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.hero-av-ring {
-  width: 68px; height: 68px;
-  border-radius: 50%;
-  background: var(--grad);
-  padding: 2px;
-  flex-shrink: 0;
-}
-
-.hero-av {
-  width: 100%; height: 100%;
-  border-radius: 50%;
-  background: var(--s2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px; font-weight: 900;
-  color: var(--orange);
-}
-
-.hero-status-dot {
-  position: absolute;
-  bottom: 2px; right: 2px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: var(--green);
-  border: 2px solid var(--s1);
-  box-shadow: 0 0 8px rgba(0,230,118,0.5);
-}
-
-.hero-info { flex: 1; min-width: 0; }
-
-.hero-name {
-  font-size: 20px; font-weight: 800;
-  letter-spacing: -0.4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
-.hero-email {
+.hero-greet {
   font-family: 'Inter', sans-serif;
-  font-size: 12px; color: var(--muted);
-  margin-top: 2px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
-.hero-badges {
-  display: flex; gap: 6px;
-  margin-top: 10px; flex-wrap: wrap;
+.hero-photo-name {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.6px;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.hero-photo-line {
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.75);
+  margin-top: 5px;
+  max-width: 85%;
+  line-height: 1.5;
+}
+
+.hero-photo-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .hero-badge {
   font-family: 'Inter', sans-serif;
-  font-size: 10.5px; font-weight: 600;
-  padding: 4px 10px;
+  font-size: 10.5px; font-weight: 700;
+  padding: 6px 12px;
   border-radius: 99px;
+  backdrop-filter: blur(6px);
 }
-.hero-badge.active { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
-.hero-badge.goal   { background: rgba(255,107,53,0.1); color: var(--orange); border: 1px solid rgba(255,107,53,0.2); }
+.hero-badge.active { background: rgba(255,107,53,0.85); color: #fff; }
+.hero-badge.goal   { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
 
-/* Quick stats inside hero */
-.hero-quick-stats {
+/* ════════════════════════════════
+   FLOATING STAT STRIP (signature)
+════════════════════════════════ */
+.stat-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--border);
-  position: relative; z-index: 1;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: -32px;
+  position: relative;
+  z-index: 2;
+  padding: 0 2px;
 }
 
-.hqs-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 10px;
-  gap: 3px;
+.stat-chip {
+  background: rgba(17,16,24,0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 12px 6px 10px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
-.hqs-item:not(:last-child) { border-right: 1px solid var(--border); }
-
-.hqs-val {
-  font-size: 18px; font-weight: 800;
-  letter-spacing: -0.5px; line-height: 1;
-}
-
-.hqs-unit { font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 2px; }
-
-.hqs-lbl {
-  font-family: 'Inter', sans-serif;
-  font-size: 10px; color: var(--muted);
-  font-weight: 500; margin-top: 1px;
-}
+.stat-chip-icon { font-size: 16px; margin-bottom: 4px; }
+.stat-chip-val  { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+.stat-chip-unit { font-size: 9.5px; font-weight: 500; color: var(--muted); margin-left: 1px; }
+.stat-chip-lbl  { font-family: 'Inter', sans-serif; font-size: 8.5px; color: var(--muted); margin-top: 2px; }
 
 /* ════════════════════════════════
    STAT CARDS
@@ -689,12 +665,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   .wc-svg { height: 200px; }
 
   /* Bottom nav centered and sized properly */
-  .up-bottom-nav {
-    max-width: 520px;
-    bottom: 24px;
-  }
+ .up-bottom-nav {
+  max-width: 620px;
+  bottom: 24px;
+}
 
-  .bn-btn { padding: 12px 24px; font-size: 13px; }
+.bn-btn {
+  padding: 12px 18px;
+  font-size: 13px;
+}
   .bn-icon svg { width: 19px; height: 19px; }
 }
 
@@ -716,3 +695,91 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 
   .up-bottom-nav { max-width: 560px; }
 }
+/* ════════════════════════════════
+   RECIPES (user page)
+════════════════════════════════ */
+.recipes-u-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+
+.recipes-u-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recipe-card-u {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+}
+
+.recipe-card-u-img {
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  background: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.recipe-card-u-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.recipe-card-u-body {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recipe-card-u-meal {
+  font-family: 'Inter', sans-serif;
+  font-size: 9.5px; font-weight: 700;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recipe-card-u-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recipe-card-u-ingr {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recipe-card-u-macros {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px;
+}
+
+.recipes-u-next {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 18px;
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  color: var(--text);
+  font-size: 13px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.recipes-u-next:hover { border-color: var(--orange); background: rgba(255,107,53,0.06); }
+.ru-next-icon { display: flex; color: var(--orange); }
+.ru-next-icon svg { width: 16px; height: 16px; }

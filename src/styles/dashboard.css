@@ -1003,3 +1003,135 @@ button { font-family: inherit; cursor: pointer; }
   width: 100%;
   margin-top: 4px;
 }
+/* ==========================================================
+   RECIPES
+   ========================================================== */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.recipe-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease;
+  cursor: pointer;
+}
+.recipe-card:hover { transform: translateY(-3px); border-color: var(--teal); }
+
+.recipe-card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: var(--surface-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: var(--muted-2);
+}
+
+.recipe-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recipe-card-body { padding: 14px; }
+
+.recipe-card-meal {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--teal);
+  background: var(--teal-soft);
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.recipe-card-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recipe-card-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.recipe-card-macros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.recipe-macro-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.recipe-macro-chip.cal  { background: var(--amber-soft);  color: var(--amber);  }
+.recipe-macro-chip.prot { background: var(--teal-soft);   color: var(--teal);   }
+.recipe-macro-chip.carb { background: var(--violet-soft); color: var(--violet); }
+.recipe-macro-chip.fat  { background: var(--coral-soft);  color: var(--coral);  }
+
+.recipe-card-footer {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.recipes-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.recipes-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.recipe-img {
+  width: 100%;
+  height: 160px;      /* أو أي ارتفاع تحبه، ده بيدي حجم متوسط ثابت */
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+.recipe-img-placeholder {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  background: var(--card-alt, #1e2530);
+  border-radius: 12px 12px 0 0;
+}
