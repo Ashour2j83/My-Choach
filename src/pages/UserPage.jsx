@@ -33,6 +33,15 @@ const MEAL_META = {
 
 const MEAL_ORDER = ["breakfast","snack1","lunch","snack2","dinner"];
 
+/* Split a meal's food text into separate items — one per line break (\n) */
+function splitFoodLines(text) {
+  if (!text) return [];
+  return text
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
 /* Catmull-Rom → cubic Bezier smoothing (natural curve through every point, no wild overshoot) */
 function smoothPath(pts) {
   if (pts.length < 2) return "";
@@ -197,6 +206,7 @@ function MealRow({ mealKey, options, selectedIdx, onChange }) {
   const idx  = selectedIdx % options.length;
   const item = options[idx];
   const hasAlts = options.length > 1;
+  const foodLines = splitFoodLines(item.food);
 
   return (
     <div className="meal-row">
@@ -212,18 +222,17 @@ function MealRow({ mealKey, options, selectedIdx, onChange }) {
       </div>
 
       <div className="meal-row-food">
-        <div className="meal-row-thumb">
-          {item.image
-            ? <img src={item.image} alt={item.food || ""} onError={e => e.target.style.display = "none"} />
-            : <span>🍽️</span>}
-        </div>
-        <div className="meal-row-food-info">
-          <div className="meal-row-food-name">{item.food || "—"}</div>
-          <div className="meal-row-food-macros">
-            {item.protein && <span>P: {item.protein}g</span>}
-            {item.carbs   && <span>C: {item.carbs}g</span>}
-            {item.fats    && <span>F: {item.fats}g</span>}
-          </div>
+        {foodLines.length > 0 ? (
+          <ul className="meal-row-food-list">
+            {foodLines.map((line, i) => <li key={i}>{line}</li>)}
+          </ul>
+        ) : (
+          <div className="meal-row-food-list-empty">—</div>
+        )}
+        <div className="meal-row-food-macros">
+          {item.protein && <span>P: {item.protein}g</span>}
+          {item.carbs   && <span>C: {item.carbs}g</span>}
+          {item.fats    && <span>F: {item.fats}g</span>}
         </div>
       </div>
 
