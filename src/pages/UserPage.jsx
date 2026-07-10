@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { db } from "../firebase/config";
 import "../styles/user.css";
 
@@ -15,32 +16,61 @@ const Icon = {
   chevron: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>,
   shuffle: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>,
   close:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  tools:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,refresh: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></svg>
+  tools:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
+  refresh: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></svg>,
+  globe:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+  droplet: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13z"/></svg>,
+  muscle:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 4v3a3 3 0 0 0 3 3h1a3 3 0 0 1 3 3v1a3 3 0 0 0 3 3h2"/><path d="M18 4v3M20 6h-4"/></svg>,
 };
 
 const MEAL_META = {
-  breakfast: { label: "Breakfast", emoji: "🌅", color: "#ff9d47", bg: "rgba(255,157,71,0.12)" },
-  snack1:    { label: "Snack 1",   emoji: "🧁", color: "#ff5c8a", bg: "rgba(255,92,138,0.12)" },
-  lunch:     { label: "Lunch",     emoji: "☀️", color: "#ffd23f", bg: "rgba(255,210,63,0.12)" },
-  snack2:    { label: "Snack 2",   emoji: "🧁", color: "#ff5c8a", bg: "rgba(255,92,138,0.12)" },
-  dinner:    { label: "Dinner",    emoji: "🌙", color: "#b388ff", bg: "rgba(179,136,255,0.12)" },
+  breakfast: { labelKey: "breakfast", emoji: "🌅", color: "#ff9d47", bg: "rgba(255,157,71,0.12)" },
+  snack1:    { labelKey: "snack1",    emoji: "🧁", color: "#ff5c8a", bg: "rgba(255,92,138,0.12)" },
+  lunch:     { labelKey: "lunch",     emoji: "☀️", color: "#ffd23f", bg: "rgba(255,210,63,0.12)" },
+  snack2:    { labelKey: "snack2",    emoji: "🧁", color: "#ff5c8a", bg: "rgba(255,92,138,0.12)" },
+  dinner:    { labelKey: "dinner",    emoji: "🌙", color: "#b388ff", bg: "rgba(179,136,255,0.12)" },
 };
 
 const MEAL_ORDER = ["breakfast","snack1","lunch","snack2","dinner"];
 
+/* Catmull-Rom → cubic Bezier smoothing (natural curve through every point, no wild overshoot) */
+function smoothPath(pts) {
+  if (pts.length < 2) return "";
+  if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
 
-/* ── SMOOTH BEZIER WEIGHT CHART ───────────────────────────────── */
+function formatChartDate(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/* ── WEIGHT CHART (violet, smooth curve, animated) ── */
 function WeightChart({ entries }) {
+  const { t } = useLanguage();
   if (!entries || entries.length < 2) return null;
 
   const sorted = [...entries].sort((a,b) => new Date(a.date) - new Date(b.date));
   const weights = sorted.map(e => parseFloat(e.weight)).filter(Boolean);
   if (!weights.length) return null;
 
-  const min = Math.min(...weights) - 1.5;
-  const max = Math.max(...weights) + 1.5;
-  const W = 340, H = 160;
-  const PAD = { t: 20, r: 16, b: 28, l: 36 };
+  const min = Math.min(...weights) - 2;
+  const max = Math.max(...weights) + 2;
+  const W = 560, H = 220;
+  const PAD = { t: 42, r: 18, b: 34, l: 40 };
   const iW = W - PAD.l - PAD.r;
   const iH = H - PAD.t - PAD.b;
 
@@ -51,100 +81,116 @@ function WeightChart({ entries }) {
     date: e.date,
   }));
 
-  let linePath = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 1; i < pts.length; i++) {
-    const prev = pts[i - 1];
-    const curr = pts[i];
-    const cpx = (curr.x - prev.x) * 0.42;
-    linePath += ` C ${prev.x + cpx} ${prev.y} ${curr.x - cpx} ${curr.y} ${curr.x} ${curr.y}`;
-  }
-
-  const areaPath =
-    linePath +
-    ` L ${pts[pts.length - 1].x} ${H - PAD.b} L ${pts[0].x} ${H - PAD.b} Z`;
+  const linePath = smoothPath(pts);
+  const areaPath = linePath + ` L ${pts[pts.length - 1].x} ${H - PAD.b} L ${pts[0].x} ${H - PAD.b} Z`;
 
   const first = weights[0], last = weights[weights.length - 1];
   const diff = (last - first).toFixed(1);
   const isDown = diff < 0;
-  const color = isDown ? "#00e676" : "#ff6b35";
 
   const yTicks = [max, (max + min) / 2, min].map(v => ({
     y: PAD.t + (1 - (v - min) / (max - min)) * iH,
     label: Math.round(v),
   }));
 
-  const xLabels = [pts[0]];
-  if (pts.length > 3) xLabels.push(pts[Math.floor(pts.length / 2)]);
-  xLabels.push(pts[pts.length - 1]);
-  const xUnique = xLabels.filter((p, i, a) => a.findIndex(q => q.x === p.x) === i);
-
   return (
-    <div className="wc-wrap">
-      <div className="wc-header">
-        <div>
-          <div className="wc-title">Weight Progress</div>
-          <div className="wc-dates">
-            {sorted[0].date} → {sorted[sorted.length - 1].date}
-          </div>
-        </div>
-        <div className={`wc-badge ${isDown ? "down" : "up"}`}>
-          {isDown ? "▼" : "▲"} {Math.abs(diff)} kg
-        </div>
+    <div className="wc-grid">
+      <div className="wc-chart-col">
+        <svg viewBox={`0 0 ${W} ${H}`} className="wc-svg">
+          <defs>
+            <linearGradient id="wg-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#b388ff" stopOpacity="0.35"/>
+              <stop offset="100%" stopColor="#b388ff" stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="wg-line" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stopColor="#9b6bff"/>
+              <stop offset="55%"  stopColor="#c9a8ff"/>
+              <stop offset="100%" stopColor="#b388ff"/>
+            </linearGradient>
+            <filter id="wg-glow" x="-30%" y="-60%" width="160%" height="260%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <text x={PAD.l - 10} y={16} textAnchor="end"
+            fill="var(--wc-axis-text)" fontSize="10.5" fontFamily="Inter,sans-serif">
+            kg
+          </text>
+
+          {yTicks.map((tck, i) => (
+            <g key={i} className="wc-gridline" style={{ animationDelay: `${i * 0.08}s` }}>
+              <line x1={PAD.l} y1={tck.y} x2={W - PAD.r} y2={tck.y}
+                stroke="var(--wc-grid-line)" strokeWidth="1" strokeDasharray="4 6"/>
+              <text x={PAD.l - 10} y={tck.y + 4} textAnchor="end"
+                fill="var(--wc-axis-text)" fontSize="11" fontFamily="Inter,sans-serif">
+                {tck.label}
+              </text>
+            </g>
+          ))}
+
+          <path className="wc-area" d={areaPath} fill="url(#wg-area)"/>
+          <path className="wc-line" pathLength="1" d={linePath} fill="none"
+            stroke="url(#wg-line)" strokeWidth="3"
+            strokeLinecap="round" strokeLinejoin="round" filter="url(#wg-glow)"/>
+
+          {pts.map((p, i) => {
+            const isLast = i === pts.length - 1;
+            const delay = 0.9 + i * 0.09;
+            return (
+              <g key={i}>
+                <text className="wc-val-label" style={{ animationDelay: `${delay + 0.1}s` }}
+                  x={p.x} y={p.y - 15} textAnchor="middle"
+                  fill="var(--text)" fontSize="12" fontWeight="700" fontFamily="Inter,sans-serif">
+                  {p.weight}
+                </text>
+                <circle
+                  className={`wc-dot ${isLast ? "is-last" : ""}`}
+                  style={{ animationDelay: `${delay}s` }}
+                  cx={p.x} cy={p.y} r={isLast ? 6 : 4}
+                  fill={isLast ? "#b388ff" : "var(--s1)"} stroke="#b388ff" strokeWidth="2"/>
+                <text className="wc-date-label" style={{ animationDelay: `${delay + 0.1}s` }}
+                  x={p.x} y={H - 10} textAnchor="middle"
+                  fill="var(--wc-axis-text)" fontSize="10" fontFamily="Inter,sans-serif">
+                  {formatChartDate(p.date)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="wc-svg" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor={color} stopOpacity="0.28"/>
-            <stop offset="100%" stopColor={color} stopOpacity="0"/>
-          </linearGradient>
-          <filter id="line-glow" x="-20%" y="-50%" width="140%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
+      <div className="wc-summary-col">
+        <div className="wc-summary-lbl">{t("currentWeight")}</div>
+        <div className="wc-summary-val">{last}<span>kg</span></div>
+        <div className={`wc-summary-delta ${isDown ? "down" : "up"}`}>
+          {isDown ? "▼" : "▲"} {Math.abs(diff)} kg
+        </div>
+        <div className="wc-summary-sub">{t("vsLastMonth")}</div>
+      </div>
+    </div>
+  );
+}
 
-        {yTicks.map((t, i) => (
-          <g key={i}>
-            <line x1={PAD.l} y1={t.y} x2={W - PAD.r} y2={t.y}
-              stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4 6"/>
-            <text x={PAD.l - 6} y={t.y + 4} textAnchor="end"
-              fill="rgba(255,255,255,0.22)" fontSize="9.5" fontFamily="Inter,sans-serif">
-              {t.label}
-            </text>
-          </g>
-        ))}
-
-        <path d={areaPath} fill="url(#wg)"/>
-        <path d={linePath} fill="none" stroke={color} strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round" filter="url(#line-glow)"/>
-
-        {pts.map((p, i) => {
-          const isLast = i === pts.length - 1;
-          return (
-            <g key={i}>
-              {isLast && <circle cx={p.x} cy={p.y} r="10" fill="none"
-                stroke={color} strokeWidth="1" opacity="0.3"/>}
-              <circle cx={p.x} cy={p.y} r={isLast ? 5 : 3.5}
-                fill={isLast ? color : "var(--s1)"}
-                stroke={color} strokeWidth="2"/>
-            </g>
-          );
-        })}
-
-        {xUnique.map((p, i) => (
-          <text key={i} x={p.x} y={H - 4} textAnchor="middle"
-            fill="rgba(255,255,255,0.22)" fontSize="9" fontFamily="Inter,sans-serif">
-            {p.date}
-          </text>
-        ))}
-      </svg>
+/* ── METRIC CARD (Weight / Body Fat / BMI / Muscle) ─────────────── */
+function MetricCard({ icon, cls, label, value, unit, delta }) {
+  return (
+    <div className="metric-card">
+      <div className={`metric-icon ${cls}`}>{icon}</div>
+      <div className="metric-lbl">{label}</div>
+      <div className="metric-val">{value}<span className="metric-unit">{unit}</span></div>
+      {delta != null && (
+        <div className={`metric-delta ${delta < 0 ? "down" : "up"}`}>
+          {delta < 0 ? "▼" : "▲"} {Math.abs(delta)}{unit === "kg" ? " kg" : "%"}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── MEAL ROW (one alternative shown, "Change" cycles the array) ── */
 function MealRow({ mealKey, options, selectedIdx, onChange }) {
+  const { t } = useLanguage();
   const meta = MEAL_META[mealKey];
   if (!options || options.length === 0) return null;
 
@@ -159,7 +205,7 @@ function MealRow({ mealKey, options, selectedIdx, onChange }) {
       </div>
 
       <div className="meal-row-label">
-        <div className="meal-row-name">{meta.label}</div>
+        <div className="meal-row-name">{t(meta.labelKey)}</div>
         <div className="meal-row-kcal" style={{ color: meta.color }}>
           {item.calories ? `${item.calories} kcal` : "—"}
         </div>
@@ -187,7 +233,7 @@ function MealRow({ mealKey, options, selectedIdx, onChange }) {
           style={{ color: meta.color }}
           onClick={() => onChange(mealKey, (idx + 1) % options.length)}
         >
-          Change <span className="mrc-icon">{Icon.refresh}</span>
+          {t("change")} <span className="mrc-icon">{Icon.refresh}</span>
         </button>
       )}
     </div>
@@ -196,6 +242,7 @@ function MealRow({ mealKey, options, selectedIdx, onChange }) {
 
 /* ── PROGRESS RING (daily total vs coach target) ── */
 function ProgressRing({ percent }) {
+  const { t } = useLanguage();
   const r = 28, c = 2 * Math.PI * r;
   const p = Math.min(100, Math.max(0, percent));
   const dash = (p / 100) * c;
@@ -205,7 +252,7 @@ function ProgressRing({ percent }) {
       <circle cx="34" cy="34" r={r} fill="none" stroke="var(--green)" strokeWidth="5"
         strokeDasharray={`${dash} ${c}`} strokeLinecap="round" transform="rotate(-90 34 34)" />
       <text x="34" y="31" textAnchor="middle" fontSize="14" fontWeight="800" fill="var(--text)">{Math.round(p)}%</text>
-      <text x="34" y="44" textAnchor="middle" fontSize="7.5" fill="var(--muted)">Goal</text>
+      <text x="34" y="44" textAnchor="middle" fontSize="7.5" fill="var(--muted)">{t("goal")}</text>
     </svg>
   );
 }
@@ -282,6 +329,7 @@ function RecipeCard({ recipe, onOpen }) {
 }
 
 function RecipeDetailModal({ recipe, onClose }) {
+  const { t } = useLanguage();
   if (!recipe) return null;
   const title = recipe.description || recipe.name || "Untitled Recipe";
   const ingredients = splitList(recipe.ingredients);
@@ -312,19 +360,19 @@ function RecipeDetailModal({ recipe, onClose }) {
               {recipe.protein && (
                 <div className="rmodal-macro">
                   <span className="rmm-val prot">{recipe.protein}g</span>
-                  <span className="rmm-lbl">Protein</span>
+                  <span className="rmm-lbl">{t("protein")}</span>
                 </div>
               )}
               {recipe.carbs && (
                 <div className="rmodal-macro">
                   <span className="rmm-val carb">{recipe.carbs}g</span>
-                  <span className="rmm-lbl">Carbs</span>
+                  <span className="rmm-lbl">{t("carbs")}</span>
                 </div>
               )}
               {recipe.fat && (
                 <div className="rmodal-macro">
                   <span className="rmm-val fat">{recipe.fat}g</span>
-                  <span className="rmm-lbl">Fat</span>
+                  <span className="rmm-lbl">{t("fats")}</span>
                 </div>
               )}
             </div>
@@ -332,7 +380,7 @@ function RecipeDetailModal({ recipe, onClose }) {
 
           {ingredients.length > 0 && (
             <div className="rmodal-section">
-              <div className="rmodal-section-title">🧾 Ingredients & Steps</div>
+              <div className="rmodal-section-title">🧾 {t("ingredientsSteps")}</div>
               <ul className="rmodal-ingr-list">
                 {ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
               </ul>
@@ -345,6 +393,7 @@ function RecipeDetailModal({ recipe, onClose }) {
 }
 
 function RecipesSection() {
+  const { t } = useLanguage();
   const [recipes, setRecipes] = useState([]);
   const [order,   setOrder]   = useState([]);
   const [page,    setPage]    = useState(0);
@@ -387,8 +436,8 @@ function RecipesSection() {
     return (
       <div className="empty-state">
         <div className="es-icon">📖</div>
-        <div className="es-title">No recipes yet</div>
-        <div className="es-sub">Coach Bahaa hasn't added any recipes yet. Check back soon!</div>
+        <div className="es-title">{t("noRecipesYet")}</div>
+        <div className="es-sub">{t("noRecipesSub")}</div>
       </div>
     );
   }
@@ -397,8 +446,8 @@ function RecipesSection() {
     <div className="up-tab-content">
       <div className="recipes-u-header">
         <div>
-          <div className="plan-header-title">Recipes</div>
-          <div className="plan-updated">{recipes.length} available</div>
+          <div className="plan-header-title">{t("recipes")}</div>
+          <div className="plan-updated">{recipes.length} {t("available")}</div>
         </div>
       </div>
 
@@ -409,7 +458,7 @@ function RecipesSection() {
       {recipes.length > 3 && (
         <button className="recipes-u-next" onClick={nextThree}>
           <span className="ru-next-icon">{Icon.shuffle}</span>
-          3 more recipes
+          {t("moreRecipes")}
         </button>
       )}
 
@@ -420,6 +469,7 @@ function RecipesSection() {
 
 /* ── INACTIVE ─────────────────────────────────────────────────── */
 function InactiveScreen() {
+  const { t } = useLanguage();
   return (
     <div className="inactive-screen">
       <div className="inactive-card">
@@ -429,60 +479,53 @@ function InactiveScreen() {
             <div className="ic-ring-inner">⏸</div>
           </div>
         </div>
-        <div className="ic-title">Plan Paused</div>
-        <div className="ic-sub">
-          Your subscription is currently inactive.
-          Reach out to Coach Bahaa to reactivate your plan and get back on track.
-        </div>
+        <div className="ic-title">{t("planPaused")}</div>
+        <div className="ic-sub">{t("planPausedSub")}</div>
         <a href="https://wa.me/201234567890" target="_blank" rel="noreferrer" className="ic-cta">
           <span className="ic-cta-icon">{Icon.whatsapp}</span>
-          Message Coach Bahaa
+          {t("messageCoach")}
         </a>
       </div>
     </div>
   );
 }
 
-/* ── NAV ITEMS (shared between sidebar + bottom nav) ─────────────── */
-const TABS = [
-  { key: "overview", icon: Icon.grid,  label: "Home"     },
-  { key: "plan",     icon: Icon.plan,  label: "My Plan"  },
-  { key: "recipes",  icon: Icon.book,  label: "Recipes"  },
-  { key: "progress", icon: Icon.chart, label: "Progress" },
-];
-
 /* ── MAIN ─────────────────────────────────────────────────────── */
 export default function UserPage() {
   const { user, userData, logout } = useAuth();
+  const { t, lang, toggleLang } = useLanguage();
+
   const [tab,         setTab]         = useState("overview");
   const [plan,        setPlan]        = useState(null);
   const [weights,     setWeights]     = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [selected, setSelected] = useState({}); // { breakfast: 0, lunch: 1, ... } — index البديل المختار حاليًا
-function handleMealChange(mealKey, idx) {
-  setSelected(s => ({ ...s, [mealKey]: idx }));
-}
+  const [selected,    setSelected]    = useState({});
 
-function getSelectedItem(mealKey) {
-  const options = plan?.[mealKey];
-  if (!options || options.length === 0) return null;
-  const idx = (selected[mealKey] || 0) % options.length;
-  return options[idx];
-}
-
-const planTotals = MEAL_ORDER.reduce((acc, key) => {
-  const item = getSelectedItem(key);
-  if (item) {
-    acc.cal  += Number(item.calories) || 0;
-    acc.prot += Number(item.protein)  || 0;
-    acc.carb += Number(item.carbs)    || 0;
-    acc.fat  += Number(item.fats)     || 0;
+  function handleMealChange(mealKey, idx) {
+    setSelected(s => ({ ...s, [mealKey]: idx }));
   }
-  return acc;
-}, { cal: 0, prot: 0, carb: 0, fat: 0 });
+
+  function getSelectedItem(mealKey) {
+    const options = plan?.[mealKey];
+    if (!options || options.length === 0) return null;
+    const idx = (selected[mealKey] || 0) % options.length;
+    return options[idx];
+  }
+
+  const planTotals = MEAL_ORDER.reduce((acc, key) => {
+    const item = getSelectedItem(key);
+    if (item) {
+      acc.cal  += Number(item.calories) || 0;
+      acc.prot += Number(item.protein)  || 0;
+      acc.carb += Number(item.carbs)    || 0;
+      acc.fat  += Number(item.fats)     || 0;
+    }
+    return acc;
+  }, { cal: 0, prot: 0, carb: 0, fat: 0 });
+
   const isInactive = userData?.status !== "active";
-  const isAdmin    = userData?.role === "admin"; // عدّل اسم الفيلد هنا لو مختلف عندك
+  const isAdmin    = userData?.role === "admin";
 
   useEffect(() => {
     if (!user) return;
@@ -509,6 +552,19 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
     <div className="up-loading"><div className="up-spinner"/></div>
   );
 
+  const TABS = [
+    { key: "overview", icon: Icon.grid,  label: t("home")     },
+    { key: "plan",     icon: Icon.plan,  label: t("myPlan")   },
+    { key: "recipes",  icon: Icon.book,  label: t("recipes")  },
+    { key: "progress", icon: Icon.chart, label: t("progress") },
+  ];
+
+  const PrefButtons = (
+    <button className="up-pref-btn" onClick={toggleLang} title="Language">
+      {Icon.globe}<span>{lang === "en" ? "AR" : "EN"}</span>
+    </button>
+  );
+
   if (isInactive) return (
     <div className="up-shell">
       <div className="up-main">
@@ -518,9 +574,10 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
             GymCoach
           </div>
           <div className="up-topbar-right">
+            {PrefButtons}
             {isAdmin && (
               <button className="up-dash-btn" onClick={() => (window.location.href = "/admin")}>
-                {Icon.tools} Dashboard
+                {Icon.tools} {t("dashboard")}
               </button>
             )}
             <button className="up-logout" onClick={logout}>{Icon.logout}</button>
@@ -532,8 +589,13 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
   );
 
   const lastWeight = weights.length ? weights[weights.length - 1] : null;
+  const prevWeight = weights.length > 1 ? weights[weights.length - 2] : null;
   const initial    = userData?.name?.charAt(0).toUpperCase() || "U";
   const firstName  = userData?.name?.split(" ")[0] || "there";
+
+  const weeksSpan = weights.length >= 2
+    ? Math.max(1, Math.round((new Date(weights[weights.length - 1].date) - new Date(weights[0].date)) / (7 * 24 * 3600 * 1000)))
+    : 0;
 
   return (
     <div className="up-shell">
@@ -554,6 +616,7 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
           ))}
         </nav>
         <div className="up-sidebar-spacer" />
+        <button className="up-sidebar-btn" onClick={toggleLang} title="Language">{Icon.globe}</button>
         {isAdmin && (
           <button className="up-sidebar-btn" onClick={() => (window.location.href = "/admin")} title="Admin Dashboard">
             {Icon.tools}
@@ -570,9 +633,10 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
             GymCoach
           </div>
           <div className="up-topbar-right">
+            {PrefButtons}
             {isAdmin && (
               <button className="up-dash-btn" onClick={() => (window.location.href = "/admin")}>
-                {Icon.tools} Dashboard
+                {Icon.tools} {t("dashboard")}
               </button>
             )}
             <div className="up-user-chip">
@@ -593,11 +657,11 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
               <div className="hero-photo">
                 <img src="/coach.jpg" alt="" className="hero-photo-img" />
                 <div className="hero-photo-content">
-                  <div className="hero-greet">Welcome back</div>
+                  <div className="hero-greet">{t("welcomeBack")}</div>
                   <div className="hero-photo-name">{firstName} 👋</div>
-                  <div className="hero-photo-line">Discipline today, results tomorrow. Keep pushing forward!</div>
+                  <div className="hero-photo-line">{t("heroLine")}</div>
                   <div className="hero-photo-badges">
-                    <span className="hero-badge active">⚡ {userData?.remainingSessions ?? 0} Sessions Left</span>
+                    <span className="hero-badge active">⚡ {userData?.remainingSessions ?? 0} {t("sessionsLeft")}</span>
                     {userData?.goal && <span className="hero-badge goal">🎯 {userData.goal}</span>}
                   </div>
                 </div>
@@ -607,22 +671,22 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
                 <div className="stat-chip">
                   <div className="stat-chip-icon">⚖️</div>
                   <div className="stat-chip-val">{userData?.currentWeight ?? lastWeight?.weight ?? "—"}<span className="stat-chip-unit">kg</span></div>
-                  <div className="stat-chip-lbl">Current</div>
+                  <div className="stat-chip-lbl">{t("current")}</div>
                 </div>
                 <div className="stat-chip">
                   <div className="stat-chip-icon">🎯</div>
                   <div className="stat-chip-val">{userData?.targetWeight ?? "—"}<span className="stat-chip-unit">kg</span></div>
-                  <div className="stat-chip-lbl">Target</div>
+                  <div className="stat-chip-lbl">{t("target")}</div>
                 </div>
                 <div className="stat-chip">
                   <div className="stat-chip-icon">📏</div>
                   <div className="stat-chip-val">{userData?.height ?? "—"}<span className="stat-chip-unit">cm</span></div>
-                  <div className="stat-chip-lbl">Height</div>
+                  <div className="stat-chip-lbl">{t("height")}</div>
                 </div>
                 <div className="stat-chip">
                   <div className="stat-chip-icon">🔥</div>
                   <div className="stat-chip-val">{userData?.remainingSessions ?? "—"}</div>
-                  <div className="stat-chip-lbl">Sessions</div>
+                  <div className="stat-chip-lbl">{t("sessions")}</div>
                 </div>
               </div>
 
@@ -634,14 +698,14 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
 
               <div className="details-grid">
                 <div className="details-card">
-                  <div className="dc-title">Profile Details</div>
+                  <div className="dc-title">{t("profileDetails")}</div>
                   {[
-                    ["Age",            userData?.age           ? `${userData.age} yrs`            : "—"],
-                    ["Height",         userData?.height        ? `${userData.height} cm`          : "—"],
-                    ["Current Weight", userData?.currentWeight ? `${userData.currentWeight} kg`   : "—"],
-                    ["Target Weight",  userData?.targetWeight  ? `${userData.targetWeight} kg`    : "—"],
-                    ["Goal",           userData?.goal          || "—"],
-                    ["Sessions Left",  userData?.remainingSessions ?? "—"],
+                    [t("age"),            userData?.age           ? `${userData.age} ${t("yrs")}`    : "—"],
+                    [t("height"),         userData?.height        ? `${userData.height} cm`          : "—"],
+                    [t("currentWeight"),  userData?.currentWeight ? `${userData.currentWeight} kg`   : "—"],
+                    [t("targetWeight"),   userData?.targetWeight  ? `${userData.targetWeight} kg`    : "—"],
+                    [t("goal"),           userData?.goal          || "—"],
+                    [t("sessionsLeftLbl"),userData?.remainingSessions ?? "—"],
                   ].map(([label, val]) => (
                     <div className="dc-row" key={label}>
                       <span className="dc-label">{label}</span>
@@ -652,14 +716,14 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
 
                 {lastWeight && (
                   <div className="details-card">
-                    <div className="dc-title">Latest Measurement</div>
+                    <div className="dc-title">{t("latestMeasurement")}</div>
                     {[
-                      ["Date",     lastWeight.date],
-                      ["Weight",   lastWeight.weight  ? `${lastWeight.weight} kg`  : "—"],
-                      ["BMI",      lastWeight.bmi     ? lastWeight.bmi             : "—"],
-                      ["Body Fat", lastWeight.bodyFat ? `${lastWeight.bodyFat}%`   : "—"],
-                      ["Muscle",   lastWeight.muscle  ? `${lastWeight.muscle}%`    : "—"],
-                      ["Water",    lastWeight.water   ? `${lastWeight.water}%`     : "—"],
+                      [t("date"),     lastWeight.date],
+                      [t("weight"),   lastWeight.weight  ? `${lastWeight.weight} kg`  : "—"],
+                      [t("bmi"),      lastWeight.bmi     ? lastWeight.bmi             : "—"],
+                      [t("bodyFat"),  lastWeight.bodyFat ? `${lastWeight.bodyFat}%`   : "—"],
+                      [t("muscleMass"),lastWeight.muscle ? `${lastWeight.muscle}%`    : "—"],
+                      [t("water"),    lastWeight.water   ? `${lastWeight.water}%`     : "—"],
                     ].map(([label, val]) => (
                       <div className="dc-row" key={label}>
                         <span className="dc-label">{label}</span>
@@ -673,122 +737,136 @@ const planTotals = MEAL_ORDER.reduce((acc, key) => {
             </div>
           )}
 
-      {tab === "plan" && (
-  <div className="up-tab-content">
-    {!plan ? (
-      <div className="empty-state">
-        <div className="es-icon">📋</div>
-        <div className="es-title">No plan yet</div>
-        <div className="es-sub">Coach Bahaa hasn't set your plan yet. Check back soon!</div>
-      </div>
-    ) : (
-      <>
-        <div className="plan-header">
-          <div className="plan-header-title">Nutrition Plan</div>
-          {plan.updatedAt?.toDate && (
-            <div className="plan-updated">
-              Updated {plan.updatedAt.toDate().toLocaleDateString()}
+          {/* ════════ PLAN ════════ */}
+          {tab === "plan" && (
+            <div className="up-tab-content">
+              {!plan ? (
+                <div className="empty-state">
+                  <div className="es-icon">📋</div>
+                  <div className="es-title">{t("noPlanYet")}</div>
+                  <div className="es-sub">{t("noPlanSub")}</div>
+                </div>
+              ) : (
+                <>
+                  <div className="plan-header">
+                    <div className="plan-header-title">{t("nutritionPlan")}</div>
+                    {plan.updatedAt?.toDate && (
+                      <div className="plan-updated">
+                        {t("updated")} {plan.updatedAt.toDate().toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="plan-summary-bar">
+                    <div className="psb-goal">
+                      <div className="psb-icon">🎯</div>
+                      <div>
+                        <div className="psb-lbl">{plan.calorieTarget ? t("todaysGoal") : t("plannedToday")}</div>
+                        <div className="psb-val">{plan.calorieTarget ?? planTotals.cal} kcal</div>
+                      </div>
+                    </div>
+                    <div className="psb-metric"><span className="psb-mlbl">{t("protein")}</span><span className="psb-mval">{planTotals.prot}g</span></div>
+                    <div className="psb-metric"><span className="psb-mlbl">{t("carbs")}</span><span className="psb-mval">{planTotals.carb}g</span></div>
+                    <div className="psb-metric"><span className="psb-mlbl">{t("fats")}</span><span className="psb-mval">{planTotals.fat}g</span></div>
+                  </div>
+
+                  <div className="meal-rows-list">
+                    {MEAL_ORDER.map(key => (
+                      <MealRow
+                        key={key}
+                        mealKey={key}
+                        options={plan[key]}
+                        selectedIdx={selected[key] || 0}
+                        onChange={handleMealChange}
+                      />
+                    ))}
+                  </div>
+
+                  {planTotals.cal > 0 && (
+                    <div className="daily-total-card">
+                      <div className="dt-icon">🎯</div>
+                      <div>
+                        <div className="dt-lbl">{t("dailyTotal")}</div>
+                        <div className="dt-val">{planTotals.cal} kcal</div>
+                      </div>
+                      <div className="dt-metric"><span className="dt-mlbl">{t("protein")}</span><span className="dt-mval">{planTotals.prot}g</span></div>
+                      <div className="dt-metric"><span className="dt-mlbl">{t("carbs")}</span><span className="dt-mval">{planTotals.carb}g</span></div>
+                      <div className="dt-metric"><span className="dt-mlbl">{t("fats")}</span><span className="dt-mval">{planTotals.fat}g</span></div>
+                      {plan.calorieTarget && <ProgressRing percent={(planTotals.cal / plan.calorieTarget) * 100} />}
+                    </div>
+                  )}
+
+                  {(plan.waterIntake || plan.cardio || plan.supplements || plan.generalNotes) && (
+                    <div className="plan-extras">
+                      {plan.waterIntake  && <div className="pe-item"><div className="pe-label">💧 {t("water")}</div><div className="pe-val">{plan.waterIntake}</div></div>}
+                      {plan.cardio       && <div className="pe-item"><div className="pe-label">🏃 {t("cardio")}</div><div className="pe-val">{plan.cardio}</div></div>}
+                      {plan.supplements  && <div className="pe-item"><div className="pe-label">💊 {t("supplements")}</div><div className="pe-val">{plan.supplements}</div></div>}
+                      {plan.generalNotes && <div className="pe-item"><div className="pe-label">📌 {t("notes")}</div><div className="pe-val">{plan.generalNotes}</div></div>}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
-        </div>
-
-        <div className="plan-summary-bar">
-          <div className="psb-goal">
-            <div className="psb-icon">🎯</div>
-            <div>
-              <div className="psb-lbl">{plan.calorieTarget ? "Today's Goal" : "Planned Today"}</div>
-              <div className="psb-val">{plan.calorieTarget ?? planTotals.cal} kcal</div>
-            </div>
-          </div>
-          <div className="psb-metric"><span className="psb-mlbl">Protein</span><span className="psb-mval">{planTotals.prot}g</span></div>
-          <div className="psb-metric"><span className="psb-mlbl">Carbs</span><span className="psb-mval">{planTotals.carb}g</span></div>
-          <div className="psb-metric"><span className="psb-mlbl">Fats</span><span className="psb-mval">{planTotals.fat}g</span></div>
-        </div>
-
-        <div className="meal-rows-list">
-          {MEAL_ORDER.map(key => (
-            <MealRow
-              key={key}
-              mealKey={key}
-              options={plan[key]}
-              selectedIdx={selected[key] || 0}
-              onChange={handleMealChange}
-            />
-          ))}
-        </div>
-
-        {planTotals.cal > 0 && (
-          <div className="daily-total-card">
-            <div className="dt-icon">🎯</div>
-            <div>
-              <div className="dt-lbl">Daily Total</div>
-              <div className="dt-val">{planTotals.cal} kcal</div>
-            </div>
-            <div className="dt-metric"><span className="dt-mlbl">Protein</span><span className="dt-mval">{planTotals.prot}g</span></div>
-            <div className="dt-metric"><span className="dt-mlbl">Carbs</span><span className="dt-mval">{planTotals.carb}g</span></div>
-            <div className="dt-metric"><span className="dt-mlbl">Fats</span><span className="dt-mval">{planTotals.fat}g</span></div>
-            {plan.calorieTarget && <ProgressRing percent={(planTotals.cal / plan.calorieTarget) * 100} />}
-          </div>
-        )}
-
-        {(plan.waterIntake || plan.cardio || plan.supplements || plan.generalNotes) && (
-          <div className="plan-extras">
-            {plan.waterIntake  && <div className="pe-item"><div className="pe-label">💧 Water</div><div className="pe-val">{plan.waterIntake}</div></div>}
-            {plan.cardio       && <div className="pe-item"><div className="pe-label">🏃 Cardio</div><div className="pe-val">{plan.cardio}</div></div>}
-            {plan.supplements  && <div className="pe-item"><div className="pe-label">💊 Supplements</div><div className="pe-val">{plan.supplements}</div></div>}
-            {plan.generalNotes && <div className="pe-item"><div className="pe-label">📌 Notes</div><div className="pe-val">{plan.generalNotes}</div></div>}
-          </div>
-        )}
-      </>
-    )}
-  </div>
-)}
 
           {/* ════════ RECIPES ════════ */}
           {tab === "recipes" && <RecipesSection/>}
 
-          {/* ════════ PROGRESS ════════ */}
+          {/* ════════ PROGRESS (redesigned) ════════ */}
           {tab === "progress" && (
             <div className="up-tab-content">
               {weights.length === 0 ? (
                 <div className="empty-state">
                   <div className="es-icon">📊</div>
-                  <div className="es-title">No data yet</div>
-                  <div className="es-sub">Coach Bahaa will log your measurements over time.</div>
+                  <div className="es-title">{t("noDataYet")}</div>
+                  <div className="es-sub">{t("noDataSub")}</div>
                 </div>
               ) : (
                 <>
-                  {weights.length >= 2 && (() => {
-                    const first = parseFloat(weights[0].weight);
-                    const last  = parseFloat(weights[weights.length - 1].weight);
-                    const diff  = (last - first).toFixed(1);
-                    const isDown = diff < 0;
-                    return (
-                      <div className="prog-summary">
-                        <div className="ps-card">
-                          <div className="ps-label">Started</div>
-                          <div className="ps-val">{first} kg</div>
-                        </div>
-                        <div className="ps-card highlight">
-                          <div className="ps-label">Total Change</div>
-                          <div className={`ps-val ${isDown ? "green" : "orange"}`}>
-                            {isDown ? "▼" : "▲"} {Math.abs(diff)} kg
-                          </div>
-                        </div>
-                        <div className="ps-card">
-                          <div className="ps-label">Now</div>
-                          <div className="ps-val">{last} kg</div>
-                        </div>
+                  <div className="wp-card">
+                    <div className="wp-card-header">
+                      <div className="wp-card-title-wrap">
+                        <span className="wp-card-icon">{Icon.chart}</span>
+                        <div className="wp-card-title">{t("weightProgress")}</div>
                       </div>
-                    );
-                  })()}
+                      {weeksSpan > 0 && (
+                        <div className="wp-range-badge">{t("lastWeeks", { n: weeksSpan })}</div>
+                      )}
+                    </div>
 
-                  <div className="chart-card">
-                    <WeightChart entries={weights}/>
+                    {weights.length >= 2
+                      ? <WeightChart entries={weights}/>
+                      : <div className="wp-not-enough">Log at least 2 weigh-ins to see your progress.</div>}
+                  </div>
+
+                  <div className="wp-metrics-grid">
+                    <MetricCard
+                      icon="⚖️" cls="violet" label={t("currentWeight")}
+                      value={lastWeight.weight} unit="kg"
+                      delta={prevWeight ? +(lastWeight.weight - prevWeight.weight).toFixed(1) : null}
+                    />
+                    <MetricCard
+                      icon="🔥" cls="coral" label={t("bodyFat")}
+                      value={lastWeight.bodyFat ?? "—"} unit="%"
+                      delta={prevWeight?.bodyFat && lastWeight.bodyFat ? +(lastWeight.bodyFat - prevWeight.bodyFat).toFixed(1) : null}
+                    />
+                    <MetricCard
+                      icon="📐" cls="blue" label={t("bmi")}
+                      value={lastWeight.bmi ?? "—"} unit=""
+                    />
+                    <MetricCard
+                      icon="💪" cls="green" label={t("muscleMass")}
+                      value={lastWeight.muscle ?? "—"} unit="kg"
+                      delta={prevWeight?.muscle && lastWeight.muscle ? +(lastWeight.muscle - prevWeight.muscle).toFixed(1) : null}
+                    />
+                  </div>
+
+                  <div className="wp-note">
+                    <span>ⓘ</span> {t("allMeasurementsNote")}
                   </div>
 
                   <button className="history-toggle" onClick={() => setShowHistory(h => !h)}>
-                    <span>⚖️ Weight History</span>
+                    <span>⚖️ {t("weightHistory")}</span>
                     <span className={`ht-arrow ${showHistory ? "open" : ""}`}>{Icon.chevron}</span>
                   </button>
 
