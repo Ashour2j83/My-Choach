@@ -62,6 +62,30 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 
 /* ════════════════════════════════
+   SHELL (sidebar + main)
+════════════════════════════════ */
+.up-shell {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.up-sidebar { display: none; }
+
+.up-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+}
+
+.up-root { max-width: 500px; margin: 0 auto; width: 100%; }
+
+/* ════════════════════════════════
    TOPBAR
 ════════════════════════════════ */
 .up-topbar {
@@ -77,6 +101,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   top: 0;
   z-index: 50;
   flex-shrink: 0;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .up-brand {
@@ -101,6 +128,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 
 .up-topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.up-dash-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--s2); border: 1px solid var(--border2); color: var(--text);
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  padding: 8px 14px; border-radius: 99px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.up-dash-btn svg { width: 13px; height: 13px; }
+.up-dash-btn:hover { border-color: var(--orange); color: var(--orange); }
 
 .up-user-chip {
   display: flex;
@@ -149,14 +186,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 .up-scroll::-webkit-scrollbar { display: none; }
 
-.up-tab-content { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+.up-tab-content {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 16px;
+  max-width: 500px; margin: 0 auto; width: 100%;
+}
 
 /* ════════════════════════════════
    HERO PHOTO
 ════════════════════════════════ */
 .hero-photo {
   position: relative;
-  height: 260px;
+  height: 240px;
   border-radius: 24px;
   overflow: hidden;
   background: var(--s1);
@@ -229,7 +270,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .hero-badge.goal   { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
 
 /* ════════════════════════════════
-   FLOATING STAT STRIP (signature)
+   FLOATING STAT STRIP
 ════════════════════════════════ */
 .stat-strip {
   display: grid;
@@ -249,7 +290,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   border-radius: 16px;
   padding: 12px 6px 10px;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
 .stat-chip-icon { font-size: 16px; margin-bottom: 4px; }
@@ -258,50 +299,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .stat-chip-lbl  { font-family: 'Inter', sans-serif; font-size: 8.5px; color: var(--muted); margin-top: 2px; }
 
 /* ════════════════════════════════
-   STAT CARDS
+   DETAILS
 ════════════════════════════════ */
-.ov-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+.details-grid { display: flex; flex-direction: column; gap: 14px; }
 
-.ov-stat-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 18px 16px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s;
-}
-.ov-stat-card:hover { transform: translateY(-2px); border-color: var(--border2); }
-
-.osc-accent-line {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-}
-
-.osc-icon-wrap {
-  width: 38px; height: 38px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 14px;
-}
-.osc-icon-wrap svg { width: 18px; height: 18px; }
-
-.osc-val {
-  font-size: 26px; font-weight: 900;
-  letter-spacing: -1px; line-height: 1;
-}
-.osc-unit { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 2px; }
-.osc-lbl  { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 5px; }
-
-/* ════════════════════════════════
-   DETAILS CARD
-════════════════════════════════ */
 .details-card {
   background: var(--s1);
   border: 1px solid var(--border);
@@ -341,60 +342,133 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 
 .meals-list { display: flex; flex-direction: column; gap: 10px; }
 
-/* ── Meal card ── */
-.meal-card {
+/* ════════════════════════════════
+   PLAN SUMMARY BAR
+════════════════════════════════ */
+.plan-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(179,136,255,0.06));
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 16px 18px;
+}
+.psb-goal { display: flex; align-items: center; gap: 12px; }
+.psb-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--s2); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.psb-lbl { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.psb-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+.psb-metric { display: flex; flex-direction: column; gap: 3px; }
+.psb-mlbl { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); }
+.psb-mval { font-size: 14px; font-weight: 700; }
+
+/* ════════════════════════════════
+   MEAL ROWS (one alternative + Change)
+════════════════════════════════ */
+.meal-rows-list { display: flex; flex-direction: column; gap: 10px; }
+
+.meal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   background: var(--s1);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  transition: border-color 0.2s;
+  border-radius: 20px;
+  padding: 14px;
+  transition: border-color 0.15s;
 }
-.meal-card.open { border-color: var(--border2); }
+.meal-row:hover { border-color: var(--border2); }
 
-.meal-card-head {
-  width: 100%; display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; padding: 14px 16px;
-  background: transparent; border: none; color: var(--text);
-  cursor: pointer; text-align: left; font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.meal-head-left { display: flex; align-items: center; gap: 12px; }
-
-.meal-emoji-wrap {
-  width: 40px; height: 40px;
-  border-radius: 13px;
+.meal-row-icon {
+  width: 44px; height: 44px; border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; flex-shrink: 0;
 }
 
-.meal-name  { font-size: 14px; font-weight: 700; }
-.meal-count { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.meal-row-label { min-width: 76px; }
+.meal-row-name { font-size: 13px; font-weight: 700; }
+.meal-row-kcal { font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 700; margin-top: 2px; }
 
-.meal-head-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-.meal-kcal-chip {
-  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
-  background: rgba(255,107,53,0.1); color: var(--orange);
-  padding: 4px 10px; border-radius: 99px;
+.meal-row-food {
+  display: flex; align-items: center; gap: 10px;
+  flex: 1; min-width: 180px;
 }
 
-.meal-chevron { color: var(--muted); display: flex; transition: transform 0.25s; }
-.meal-chevron svg { width: 16px; height: 16px; }
-.meal-chevron.rotated { transform: rotate(180deg); }
-
-.meal-items { border-top: 1px solid var(--border); }
-
-.food-row {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+.meal-row-thumb {
+  width: 52px; height: 52px; border-radius: 12px;
+  overflow: hidden; flex-shrink: 0;
+  background: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
 }
-.food-row:last-child { border-bottom: none; }
+.meal-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-.food-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.food-name { font-size: 13.5px; font-weight: 600; }
-.food-qty  { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); background: var(--s2); padding: 2px 8px; border-radius: 6px; }
+.meal-row-food-info { min-width: 0; }
+.meal-row-food-name {
+  font-size: 13.5px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.meal-row-food-macros {
+  font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--muted);
+  display: flex; gap: 8px; margin-top: 2px; flex-wrap: wrap;
+}
 
-.food-row-macros { display: flex; gap: 5px; flex-wrap: wrap; }
+.meal-row-change {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: none;
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; margin-left: auto;
+  padding: 6px 4px;
+}
+.mrc-icon { display: flex; }
+.mrc-icon svg { width: 14px; height: 14px; }
+
+/* ════════════════════════════════
+   DAILY TOTAL CARD
+════════════════════════════════ */
+.daily-total-card {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  background: rgba(0,230,118,0.05);
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: 20px;
+  padding: 16px 18px;
+}
+.dt-icon {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: rgba(0,230,118,0.12); color: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.dt-lbl { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.dt-val { font-size: 16px; font-weight: 800; color: var(--green); margin-top: 2px; }
+.dt-metric { display: flex; flex-direction: column; gap: 3px; }
+.dt-mlbl { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); }
+.dt-mval { font-size: 14px; font-weight: 700; }
+.dt-ring { width: 60px; height: 60px; margin-left: auto; flex-shrink: 0; }
+
+/* ════════════════════════════════
+   DESKTOP — bigger rows, divider before Change
+════════════════════════════════ */
+@media (min-width: 1024px) {
+  .meal-row { padding: 18px 20px; border-radius: 22px; gap: 16px; }
+  .meal-row-icon { width: 52px; height: 52px; font-size: 24px; }
+  .meal-row-thumb { width: 64px; height: 64px; border-radius: 14px; }
+  .meal-row-food-name { font-size: 14.5px; }
+  .meal-row-change {
+    padding: 8px 0 8px 20px;
+    border-left: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .plan-summary-bar { padding: 20px 24px; }
+  .daily-total-card { padding: 20px 24px; }
+  .dt-ring { width: 68px; height: 68px; }
+}
 
 .fm { font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
 .fm.cal  { background: rgba(255,107,53,0.12); color: var(--orange); }
@@ -402,16 +476,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .fm.carb { background: rgba(77,159,255,0.12); color: var(--blue); }
 .fm.fat  { background: rgba(255,183,77,0.12); color: var(--gold); }
 
-.food-notes { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
-
-/* Macros summary row inside meal */
-.meal-macros-row {
-  display: flex; gap: 6px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--s2);
-  flex-wrap: wrap;
-}
 
 .plan-extras {
   background: var(--s1); border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
@@ -420,6 +484,218 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .pe-item:last-child { border-bottom: none; }
 .pe-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
 .pe-val   { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--text); line-height: 1.6; }
+
+/* ════════════════════════════════
+   RECIPES — list cards
+════════════════════════════════ */
+.recipes-u-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+
+.recipes-u-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recipe-card-u {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.recipe-card-u:hover { border-color: var(--border2); transform: translateY(-1px); }
+
+.recipe-card-u-img {
+  width: 92px;
+  height: 92px;
+  flex-shrink: 0;
+  background: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+}
+.recipe-card-u-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.recipe-card-u-body {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recipe-card-u-meal {
+  font-family: 'Inter', sans-serif;
+  font-size: 9.5px; font-weight: 700;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recipe-card-u-title {
+  font-size: 14px;
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-card-u-ingr {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-card-u-macros {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px;
+}
+
+.recipe-card-u-arrow {
+  flex-shrink: 0;
+  color: var(--muted);
+  padding: 0 14px;
+  display: flex;
+  transform: rotate(-90deg);
+}
+.recipe-card-u-arrow svg { width: 15px; height: 15px; }
+
+.recipes-u-next {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 18px;
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  color: var(--text);
+  font-size: 13px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.recipes-u-next:hover { border-color: var(--orange); background: rgba(255,107,53,0.06); }
+.ru-next-icon { display: flex; color: var(--orange); }
+.ru-next-icon svg { width: 16px; height: 16px; }
+
+/* ════════════════════════════════
+   RECIPE DETAIL MODAL
+════════════════════════════════ */
+.rmodal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.rmodal-sheet {
+  background: var(--s1);
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  border-radius: 26px 26px 0 0;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.22s cubic-bezier(.2,.8,.2,1);
+  scrollbar-width: none;
+}
+.rmodal-sheet::-webkit-scrollbar { display: none; }
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.rmodal-close {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(9,8,13,0.55); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.rmodal-close svg { width: 15px; height: 15px; }
+
+.rmodal-img-wrap {
+  position: relative;
+  height: 220px;
+  background: var(--s2);
+}
+.rmodal-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.rmodal-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 46px; }
+
+.rmodal-meal-badge {
+  position: absolute; left: 16px; bottom: 14px;
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+  background: rgba(255,107,53,0.9); color: #fff;
+  padding: 5px 12px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.rmodal-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+.rmodal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.35; }
+
+.rmodal-macros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.rmodal-macro {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 6px;
+  text-align: center;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.rmm-val { font-size: 14px; font-weight: 800; }
+.rmm-val.cal  { color: var(--orange); }
+.rmm-val.prot { color: var(--green); }
+.rmm-val.carb { color: var(--blue); }
+.rmm-val.fat  { color: var(--gold); }
+.rmm-lbl { font-family: 'Inter', sans-serif; font-size: 9.5px; color: var(--muted); }
+
+.rmodal-section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.rmodal-ingr-list {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.rmodal-ingr-list li {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  padding-left: 16px;
+  position: relative;
+}
+.rmodal-ingr-list li::before {
+  content: '';
+  position: absolute; left: 0; top: 8px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--orange);
+}
 
 /* ════════════════════════════════
    PROGRESS TAB
@@ -444,30 +720,23 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .ps-val.green  { color: var(--green); }
 .ps-val.orange { color: var(--orange); }
 
-/* Chart card */
 .chart-card {
   background: var(--s1); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
 }
 
-.wc-wrap {}
-
 .wc-header {
   display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;
 }
-
 .wc-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
 .wc-dates { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--muted); }
-
 .wc-badge {
   font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 800;
   padding: 5px 12px; border-radius: 99px; flex-shrink: 0;
 }
 .wc-badge.down { color: var(--green);  background: rgba(0,230,118,0.1); }
 .wc-badge.up   { color: var(--orange); background: rgba(255,107,53,0.1); }
-
 .wc-svg { width: 100%; height: 160px; display: block; overflow: visible; }
 
-/* History toggle */
 .history-toggle {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px; background: var(--s1); border: 1px solid var(--border);
@@ -480,24 +749,19 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .ht-arrow svg { width: 16px; height: 16px; }
 .ht-arrow.open { transform: rotate(180deg); }
 
-/* Weight history list */
 .wh-list { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-
 .wh-row {
   display: grid; grid-template-columns: auto 1fr auto;
   align-items: center; gap: 12px; padding: 12px 16px;
   border-bottom: 1px solid var(--border);
 }
 .wh-row:last-child { border-bottom: none; }
-
 .wh-date { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .wh-vals { display: flex; align-items: center; gap: 8px; }
 .wh-weight { font-size: 14px; font-weight: 700; }
-
 .wh-diff { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
 .wh-diff.down { color: var(--green);  background: rgba(0,230,118,0.1); }
 .wh-diff.up   { color: var(--orange); background: rgba(255,107,53,0.1); }
-
 .wh-extra { display: flex; gap: 5px; justify-content: flex-end; flex-wrap: wrap; }
 .wh-tag { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--muted); background: var(--s2); padding: 2px 7px; border-radius: 6px; }
 
@@ -512,38 +776,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .es-title { font-size: 18px; font-weight: 800; }
 .es-sub   { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 260px; }
 
+.loading-row {
+  padding: 40px; text-align: center; color: var(--muted);
+  font-family: 'Inter', sans-serif; font-size: 13px;
+}
+
 /* ════════════════════════════════
-   INACTIVE SCREEN — premium
+   INACTIVE SCREEN
 ════════════════════════════════ */
 .inactive-screen {
   flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px;
 }
-
 .inactive-card {
   width: 100%; max-width: 340px;
   background: var(--s1); border: 1px solid var(--border);
   border-radius: 28px; padding: 36px 28px; text-align: center;
   position: relative; overflow: hidden;
 }
-
 .inactive-card::before {
   content: '';
   position: absolute; inset: 0;
   background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.08), transparent);
   pointer-events: none;
 }
-
-.ic-visual {
-  position: relative; width: 96px; height: 96px;
-  margin: 0 auto 24px;
-}
-
+.ic-visual { position: relative; width: 96px; height: 96px; margin: 0 auto 24px; }
 .ic-ring-outer {
   width: 96px; height: 96px; border-radius: 50%;
   border: 1px solid rgba(255,107,53,0.2);
   display: flex; align-items: center; justify-content: center;
 }
-
 .ic-ring-inner {
   width: 72px; height: 72px; border-radius: 50%;
   background: rgba(255,107,53,0.08);
@@ -551,15 +812,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   display: flex; align-items: center; justify-content: center;
   font-size: 30px;
 }
-
 .ic-pulse {
   position: absolute; inset: -16px; border-radius: 50%;
   background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%);
 }
-
 .ic-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 10px; position: relative; z-index: 1; }
 .ic-sub   { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--muted); line-height: 1.75; margin-bottom: 28px; position: relative; z-index: 1; }
-
 .ic-cta {
   display: inline-flex; align-items: center; gap: 10px;
   background: #25d366; color: #fff;
@@ -575,7 +833,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .ic-cta-icon svg { width: 100%; height: 100%; }
 
 /* ════════════════════════════════
-   FLOATING ISLAND BOTTOM NAV
+   FLOATING BOTTOM NAV (mobile only)
 ════════════════════════════════ */
 .up-bottom-nav {
   position: fixed;
@@ -612,174 +870,71 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   font-family: 'Plus Jakarta Sans', sans-serif;
   white-space: nowrap;
 }
-
-.bn-btn.active {
-  background: var(--grad);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(255,61,113,0.35);
-}
-
+.bn-btn.active { background: var(--grad); color: #fff; box-shadow: 0 4px 16px rgba(255,61,113,0.35); }
 .bn-icon { display: flex; align-items: center; }
 .bn-icon svg { width: 17px; height: 17px; }
+.bn-lbl { display: none; }
+@media (min-width: 380px) { .bn-lbl { display: inline; } }
 
 /* ════════════════════════════════
-   DESKTOP  ≥ 768px
-════════════════════════════════ */
-@media (min-width: 768px) {
-  .up-root {
-    max-width: 780px;
-    width: 100%;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    min-height: 100vh;
-  }
-
-  /* Topbar bigger */
-  .up-topbar { padding: 0 32px; }
-
-  /* Content wider padding */
-  .up-tab-content { padding: 24px 32px; gap: 18px; }
-
-  /* Stats: 4 columns on desktop */
-  .ov-stats { grid-template-columns: repeat(4, 1fr); }
-
-  /* Hero quick stats bigger */
-  .hqs-val { font-size: 22px; }
-  .hqs-lbl { font-size: 12px; }
-  .hero-name { font-size: 24px; }
-
-  /* Hero padding more generous */
-  .hero-main { padding: 28px 26px 20px; }
-
-  /* Details card rows bigger font */
-  .dc-label, .dc-val { font-size: 14px; }
-
-  /* Plan content */
-  .meal-card-head { padding: 16px 20px; }
-  .food-row { padding: 14px 20px; }
-
-  /* Progress summary */
-  .ps-val { font-size: 22px; }
-
-  /* Chart bigger */
-  .wc-svg { height: 200px; }
-
-  /* Bottom nav centered and sized properly */
- .up-bottom-nav {
-  max-width: 620px;
-  bottom: 24px;
-}
-
-.bn-btn {
-  padding: 12px 18px;
-  font-size: 13px;
-}
-  .bn-icon svg { width: 19px; height: 19px; }
-}
-
-/* ════════════════════════════════
-   LARGE DESKTOP  ≥ 1024px
+   DESKTOP  ≥ 1024px — sidebar layout (matches reference)
 ════════════════════════════════ */
 @media (min-width: 1024px) {
-  .up-root { max-width: 860px; width: 100%; }
+  .up-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 78px;
+    flex-shrink: 0;
+    background: var(--s1);
+    border-right: 1px solid var(--border);
+    padding: 22px 0;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .up-sidebar-brand {
+    width: 42px; height: 42px; border-radius: 13px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; margin-bottom: 22px; flex-shrink: 0;
+  }
+  .up-sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+  .up-sidebar-btn {
+    width: 46px; height: 46px; border-radius: 15px;
+    border: none; background: transparent; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: color 0.15s, background 0.15s;
+  }
+  .up-sidebar-btn svg { width: 20px; height: 20px; }
+  .up-sidebar-btn:hover { color: var(--text); background: var(--s2); }
+  .up-sidebar-btn.active { background: var(--grad); color: #fff; box-shadow: 0 6px 16px rgba(255,61,113,0.35); }
+  .up-sidebar-spacer { flex: 1; }
 
-  .up-tab-content { padding: 28px 40px; }
+  .up-bottom-nav { display: none; }
 
-  .hero-av-ring  { width: 80px; height: 80px; }
-  .hero-av       { font-size: 30px; }
-  .hero-name     { font-size: 26px; }
-  .hero-main     { padding: 32px 30px 22px; gap: 20px; }
+  .up-root,
+  .up-topbar,
+  .up-tab-content { max-width: none; }
 
-  .osc-val    { font-size: 30px; }
-  .osc-icon-wrap { width: 44px; height: 44px; border-radius: 14px; }
+  .up-topbar { padding: 0 36px; }
+  .up-tab-content { max-width: 1040px; margin: 0 auto; padding: 26px 36px 40px; gap: 18px; }
 
-  .up-bottom-nav { max-width: 560px; }
+  .hero-photo { height: 300px; }
+  .hero-photo-name { font-size: 32px; }
+  .hero-photo-line { font-size: 13.5px; max-width: 60%; }
+
+  .stat-strip { grid-template-columns: repeat(4, 1fr); margin-top: -40px; gap: 12px; }
+  .stat-chip { padding: 16px 10px 14px; border-radius: 18px; }
+  .stat-chip-val { font-size: 20px; }
+  .stat-chip-lbl { font-size: 10px; }
+
+  .details-grid { flex-direction: row; gap: 16px; }
+  .details-grid .details-card { flex: 1; }
+
+  .recipes-u-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+
+  .rmodal-overlay { align-items: center; }
+  .rmodal-sheet { border-radius: 26px; max-height: 84vh; }
 }
-/* ════════════════════════════════
-   RECIPES (user page)
-════════════════════════════════ */
-.recipes-u-header {
-  display: flex; align-items: baseline; justify-content: space-between;
-}
-
-.recipes-u-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.recipe-card-u {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-}
-
-.recipe-card-u-img {
-  width: 110px;
-  height: 110px;
-  flex-shrink: 0;
-  background: var(--s2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-}
-.recipe-card-u-img img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-}
-
-.recipe-card-u-body {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.recipe-card-u-meal {
-  font-family: 'Inter', sans-serif;
-  font-size: 9.5px; font-weight: 700;
-  color: var(--orange);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.recipe-card-u-title {
-  font-size: 14.5px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recipe-card-u-ingr {
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recipe-card-u-macros {
-  display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px;
-}
-
-.recipes-u-next {
-  width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 14px 18px;
-  background: var(--s1);
-  border: 1px solid var(--border2);
-  border-radius: 16px;
-  color: var(--text);
-  font-size: 13px; font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.recipes-u-next:hover { border-color: var(--orange); background: rgba(255,107,53,0.06); }
-.ru-next-icon { display: flex; color: var(--orange); }
-.ru-next-icon svg { width: 16px; height: 16px; }
