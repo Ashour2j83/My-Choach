@@ -1,8 +1,10 @@
-import admin from "firebase-admin";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
@@ -10,7 +12,8 @@ if (!admin.apps.length) {
   });
 }
 
-const db = admin.firestore();
+const db = getFirestore();
+const auth = getAuth();
 
 function parseUserAgent(ua = "") {
   let browser = "Unknown";
@@ -47,16 +50,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing idToken or deviceId" });
     }
 
-    // تحقق حقيقي إن الطلب جاي من يوزر مسجل دخول فعلاً (بديل بسيط وآمن عن App Check)
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const decoded = await auth.verifyIdToken(idToken);
     const uid = decoded.uid;
 
     const ip        = getClientIp(req);
     const userAgent = req.headers["user-agent"] || "unknown";
     const { browser, os } = parseUserAgent(userAgent);
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
 
-    // doc id ثابت = uid_deviceId عشان نقدر نجيب السجل مباشرة من غير query
     const docId     = `${uid}_${deviceId}`;
     const deviceRef = db.collection("devices").doc(docId);
     const snap      = await deviceRef.get();
@@ -70,7 +71,7 @@ export default async function handler(req, res) {
         uid, deviceId, ip, userAgent, browser, os,
         firstLogin: now,
         lastLogin:  now,
-        trusted: isFirstDeviceEver, // أول جهاز = موثوق تلقائي
+        trusted: isFirstDeviceEver,
         blocked: false,
       });
 
@@ -87,7 +88,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ allow: false, status: "blocked" });
     }
 
-    /* ── جهاز لسه مستني موافقة (already pending) ── */
+    /* ── جهاز لسه مستني موافقة ── */
     if (!device.trusted) {
       await deviceRef.update({ ip, userAgent, browser, os, lastLogin: now });
       return res.status(200).json({ allow: false, status: "new_device_pending" });
@@ -99,6 +100,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("verify-device error:", err);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error", detail: err.message });
   }
 }
