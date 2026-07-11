@@ -5,6 +5,17 @@ import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/config";
 import "../styles/auth.css";
 
+function getDeviceId() {
+  let id = localStorage.getItem("gc_device_id");
+  if (!id) {
+    id = (typeof crypto !== "undefined" && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem("gc_device_id", id);
+  }
+  return id;
+}
+
 export default function Login() {
   const { login, logout, resendVerification } = useAuth();
   const navigate = useNavigate();
@@ -42,6 +53,33 @@ export default function Login() {
         setError({ type: "verify" });
         setLoading(false);
         return;
+      }
+
+      /* ── فحص الجهاز قبل أي حاجة تانية ── */
+      try {
+        const idToken  = await firebaseUser.getIdToken();
+        const deviceId = getDeviceId();
+
+        const resp = await fetch("/api/verify-device", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken, deviceId }),
+        });
+        const deviceResult = await resp.json();
+
+        if (!deviceResult.allow) {
+          await logout();
+          if (deviceResult.status === "blocked") {
+            setError({ type: "device-blocked" });
+          } else {
+            setError({ type: "device-pending" });
+          }
+          setLoading(false);
+          return;
+        }
+      } catch (deviceErr) {
+        // لو الـ API نفسه وقع، منمنعش اليوزر من الدخول عشانه — بس نسجل الخطأ
+        console.error("Device check failed:", deviceErr);
       }
 
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));
@@ -148,6 +186,27 @@ export default function Login() {
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* New device — pending approval */}
+          {error?.type === "device-pending" && (
+            <div className="auth-notice verify">
+              <div className="notice-icon">🔐</div>
+              <div className="notice-body">
+                <div className="notice-title">New device detected</div>
+                <div className="notice-sub">
+                  We noticed you're signing in from a new device. Coach Bahaa needs to approve
+                  it first — you'll be able to log in right after.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Blocked device */}
+          {error?.type === "device-blocked" && (
+            <div className="auth-error">
+              <span>🚫</span> This device has been blocked. Contact Coach Bahaa if you think this is a mistake.
             </div>
           )}
 

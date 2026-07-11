@@ -3,6 +3,7 @@ import {
   collection,
   onSnapshot,
   query,
+  where,
   orderBy,
   doc,
   updateDoc,
@@ -54,6 +55,9 @@ export default function AdminDashboard() {
 
   const [planIds, setPlanIds] = useState(new Set());
 
+  const [devices, setDevices] = useState([]);
+  const [devicesLoading, setDevicesLoading] = useState(true);
+
   const [editingUser,   setEditingUser]   = useState(null);
   const [planUser,      setPlanUser]      = useState(null);
   const [weightUser,    setWeightUser]    = useState(null);
@@ -84,6 +88,14 @@ export default function AdminDashboard() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "devices"), (snap) => {
+      setDevices(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setDevicesLoading(false);
+    }, (err) => { console.error(err); setDevicesLoading(false); });
+    return () => unsub();
+  }, []);
+
   const stats = useMemo(() => {
     const active        = users.filter(u => u.status === "active").length;
     const pending       = users.filter(u => u.status === "pending").length;
@@ -102,8 +114,23 @@ export default function AdminDashboard() {
     );
   }, [users, search]);
 
+  const pendingDevices = useMemo(
+    () => devices.filter(d => !d.trusted && !d.blocked),
+    [devices]
+  );
+
   async function setStatus(userId, status) {
     try { await updateDoc(doc(db, "users", userId), { status }); }
+    catch (err) { console.error(err); }
+  }
+
+  async function setDeviceTrust(deviceDocId, trusted) {
+    try { await updateDoc(doc(db, "devices", deviceDocId), { trusted, blocked: false }); }
+    catch (err) { console.error(err); }
+  }
+
+  async function setDeviceBlocked(deviceDocId, blocked) {
+    try { await updateDoc(doc(db, "devices", deviceDocId), { blocked }); }
     catch (err) { console.error(err); }
   }
 
@@ -130,6 +157,9 @@ export default function AdminDashboard() {
               onClick={() => goTo(item.key)}
             >
               <span className="nav-icon">{item.icon}</span> {item.label}
+              {item.key === "requests" && pendingDevices.length > 0 && (
+                <span className="nav-badge amber">{pendingDevices.length}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -206,6 +236,18 @@ export default function AdminDashboard() {
 
           {activeView === "recipes" && (
             <RecipesView onEdit={setEditingRecipe} />
+          )}
+
+          {activeView === "requests" && (
+            <RequestsView
+              devices={devices}
+              devicesLoading={devicesLoading}
+              users={users}
+              onApprove={id => setDeviceTrust(id, true)}
+              onBlock={id => setDeviceBlocked(id, true)}
+              onUnblock={id => setDeviceBlocked(id, false)}
+              onRevoke={id => setDeviceTrust(id, false)}
+            />
           )}
         </div>
       </div>
@@ -497,5 +539,91 @@ function RecipeCard({ recipe, onEdit }) {
         </button>
       </div>
     </div>
+  );
+}
+
+/* ============================================================
+   REQUESTS — device login approvals
+   ============================================================ */
+function RequestsView({ devices, devicesLoading, users, onApprove, onBlock, onUnblock, onRevoke }) {
+  const userMap = useMemo(() => {
+    const m = new Map();
+    users.forEach(u => m.set(u.id, u));
+    return m;
+  }, [users]);
+
+  const pending = devices.filter(d => !d.trusted && !d.blocked);
+  const others  = devices.filter(d => d.trusted || d.blocked)
+    .sort((a, b) => (b.lastLogin?.toMillis?.() ?? 0) - (a.lastLogin?.toMillis?.() ?? 0));
+
+  if (devicesLoading) return <div className="dash-card"><div className="loading-row">Loading requests…</div></div>;
+
+  return (
+    <>
+      {pending.length > 0 && (
+        <div className="dash-card" style={{ marginBottom: 20 }}>
+          <div className="card-header">
+            <div className="card-title">🔔 Pending Device Approvals</div>
+          </div>
+          <div style={{ padding: 12 }}>
+            {pending.map(d => {
+              const u = userMap.get(d.uid);
+              return (
+                <div key={d.id} className="device-card">
+                  <div className="device-card-info">
+                    <div className="device-card-name">{u?.name || "Unknown client"}</div>
+                    <div className="device-card-meta">
+                      <span className="device-card-tag">{d.browser} · {d.os}</span>
+                      <span className="device-card-tag">{d.ip}</span>
+                      <span className="device-card-tag">{fmtDate(d.firstLogin)}</span>
+                    </div>
+                  </div>
+                  <span className="status-chip pending">Pending</span>
+                  <div className="device-card-btns">
+                    <button className="btn-approve" onClick={() => onApprove(d.id)}>✓ Approve</button>
+                    <button className="btn-reject" onClick={() => onBlock(d.id)}>🚫 Block</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="dash-card">
+        <div className="card-header">
+          <div className="card-title">📱 All Devices</div>
+        </div>
+        {others.length === 0 ? (
+          <div className="empty-state"><div className="empty-state-icon">📱</div>No device records yet.</div>
+        ) : (
+          <div style={{ padding: 12 }}>
+            {others.map(d => {
+              const u = userMap.get(d.uid);
+              return (
+                <div key={d.id} className="device-card">
+                  <div className="device-card-info">
+                    <div className="device-card-name">{u?.name || "Unknown client"}</div>
+                    <div className="device-card-meta">
+                      <span className="device-card-tag">{d.browser} · {d.os}</span>
+                      <span className="device-card-tag">{d.ip}</span>
+                      <span className="device-card-tag">Last: {fmtDate(d.lastLogin)}</span>
+                    </div>
+                  </div>
+                  <span className={`status-chip ${d.blocked ? "blocked" : "trusted"}`}>
+                    {d.blocked ? "Blocked" : "Trusted"}
+                  </span>
+                  <div className="device-card-btns">
+                    {d.blocked
+                      ? <button className="btn-sm" onClick={() => onUnblock(d.id)}>Unblock</button>
+                      : <button className="btn-sm" onClick={() => onRevoke(d.id)}>Revoke trust</button>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
