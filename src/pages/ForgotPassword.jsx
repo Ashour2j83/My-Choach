@@ -42,8 +42,15 @@ export default function ForgotPassword() {
       <div className="auth-card">
 
         {/* ── TOP: gym photo ── */}
-        <div className="card-top">
-          <div className="card-top-inner">
+<div className="card-top">
+  <video
+    className="ct-video"
+    src="/video.mp4"
+    autoPlay
+    muted
+    loop
+    playsInline
+  />          <div className="card-top-inner">
 
             <div className="ct-brand">
               <div className="ct-brand-icon">🏋️</div>
@@ -57,23 +64,6 @@ export default function ForgotPassword() {
               Reset your password and get straight back to your plan and sessions.
             </div>
 
-            <div className="ct-coach">
-              <div className="ct-coach-av">🏋️</div>
-              <div className="ct-coach-info">
-                <div className="ct-coach-name">Coach Bahaa</div>
-                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
-              </div>
-              <div className="ct-coach-stats">
-                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
-                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
-              </div>
-            </div>
-
-            <div className="ct-pills">
-              <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
-              <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
-              <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
-            </div>
 
           </div>
         </div>
@@ -83,9 +73,28 @@ export default function ForgotPassword() {
           {!sent ? (
             <>
               <div className="cf-title">Forgot your password?</div>
-              <div className="cf-sub">
+           <div className="cf-sub">
                 Enter your email and we'll send a reset link.{" "}
                 <Link to="/login">Back to sign in</Link>
+              </div>
+
+              <div className="cf-coach-block">
+                <div className="ct-coach">
+                  <div className="ct-coach-av">🏋️</div>
+                  <div className="ct-coach-info">
+                    <div className="ct-coach-name">Coach Bahaa</div>
+                    <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
+                  </div>
+                  <div className="ct-coach-stats">
+                    <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
+                    <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
+                  </div>
+                </div>
+                <div className="ct-pills">
+                  <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
+                  <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
+                  <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
+                </div>
               </div>
 
               {error && (

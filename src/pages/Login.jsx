@@ -124,9 +124,16 @@ export default function Login() {
     <div className="auth-bg">
       <div className="auth-card">
 
-        {/* ── TOP: gym photo ── */}
-        <div className="card-top">
-          <div className="card-top-inner">
+        {/* ── TOP: gym video ── */}
+<div className="card-top">
+  <video
+    className="ct-video"
+    src="/video.mp4"
+    autoPlay
+    muted
+    loop
+    playsInline
+  />          <div className="card-top-inner">
 
             <div className="ct-brand">
               <div className="ct-brand-icon">🏋️</div>
@@ -140,6 +147,18 @@ export default function Login() {
               Everything Bahaa built for you — waiting on the other side.
             </div>
 
+          </div>
+        </div>
+
+        {/* ── FORM ── */}
+        <div className="card-form">
+          <div className="cf-title">Welcome back</div>
+          <div className="cf-sub">
+            Back to your fitness journey.{" "}
+            <Link to="/signup">New here? Sign up</Link>
+          </div>
+
+          <div className="cf-coach-block">
             <div className="ct-coach">
               <div className="ct-coach-av">🏋️</div>
               <div className="ct-coach-info">
@@ -151,22 +170,11 @@ export default function Login() {
                 <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
               </div>
             </div>
-
             <div className="ct-pills">
               <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
               <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
               <div className="ct-pill"><span className="ct-pill-icon">🤖</span> AI Coach</div>
             </div>
-
-          </div>
-        </div>
-
-        {/* ── FORM ── */}
-        <div className="card-form">
-          <div className="cf-title">Welcome back</div>
-          <div className="cf-sub">
-            Back to your fitness journey.{" "}
-            <Link to="/signup">New here? Sign up</Link>
           </div>
 
           {/* Not verified */}
