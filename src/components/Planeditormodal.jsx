@@ -56,7 +56,6 @@ export default function PlanEditorModal({ user, onClose }) {
   const [error, setError] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
 
-  // Load plan doc where the document ID equals the selected user's UID.
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -110,7 +109,6 @@ export default function PlanEditorModal({ user, onClose }) {
         {
           _rowId: newItemId(),
           food: "",
-          quantity: "",
           calories: "",
           protein: "",
           carbs: "",
@@ -142,7 +140,10 @@ export default function PlanEditorModal({ user, onClose }) {
   }
 
   function stripRowIds(arr) {
-    return arr.map(({ _rowId, ...rest }) => rest);
+    // "quantity" is intentionally dropped here too — even if an older
+    // item still has it from before this field was removed, saving the
+    // plan again will no longer persist it.
+    return arr.map(({ _rowId, quantity, ...rest }) => rest);
   }
 
   async function handleSave() {
@@ -151,7 +152,7 @@ export default function PlanEditorModal({ user, onClose }) {
     try {
       const planRef = doc(db, "plans", user.id);
       const payload = {
-        userId: user.id, // ← the field UserPage.jsx actually queries by
+        userId: user.id,
         breakfast: stripRowIds(plan.breakfast),
         snack1: stripRowIds(plan.snack1),
         lunch: stripRowIds(plan.lunch),
@@ -165,14 +166,8 @@ export default function PlanEditorModal({ user, onClose }) {
       };
 
       if (docExists) {
-        // Document already exists for this UID — update in place.
-        // This also backfills userId onto plans that were saved before
-        // this field existed.
         await updateDoc(planRef, payload);
       } else {
-        // No plan yet for this user — create it, with doc ID == user UID.
-        // Never use addDoc()/auto-id here, or a duplicate plan could be
-        // created for a user who already has one.
         await setDoc(planRef, payload);
         setDocExists(true);
       }
@@ -263,18 +258,13 @@ export default function PlanEditorModal({ user, onClose }) {
                       {plan[meal.key].map((item) => (
                         <div className="food-item-card" key={item._rowId}>
                           <div className="food-item-top">
-                            <input
+                            <textarea
+                              className="food-item-textarea"
                               placeholder="Food"
+                              rows={2}
                               value={item.food}
                               onChange={(e) =>
                                 updateItem(meal.key, item._rowId, "food", e.target.value)
-                              }
-                            />
-                            <input
-                              placeholder="Qty"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                updateItem(meal.key, item._rowId, "quantity", e.target.value)
                               }
                             />
                             <button
