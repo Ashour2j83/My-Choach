@@ -135,9 +135,14 @@ export default function Login() {
     playsInline
   />          <div className="card-top-inner">
 
-            
+            <div className="ct-brand">
+              <div className="ct-brand-icon">🏋️</div>
+              <div className="ct-brand-name">GymCoach</div>
+            </div>
 
-           
+            <div className="ct-tagline">
+              Your <span className="accent">transformation</span> starts here
+            </div>
             <div className="ct-desc">
               Everything Bahaa built for you — waiting on the other side.
             </div>
