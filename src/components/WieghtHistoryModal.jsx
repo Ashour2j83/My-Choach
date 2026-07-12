@@ -3,7 +3,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   onSnapshot,
   doc,
   addDoc,
@@ -47,20 +46,26 @@ export default function WeightHistoryModal({ user, onClose }) {
     setLoading(true);
     const q = query(
       collection(db, "weightHistory"),
-      where("userId", "==", user.id),
-      orderBy("date", "desc")
+      where("userId", "==", user.id)
+      // No orderBy here on purpose — combining where() + orderBy() on a
+      // different field requires a Firestore composite index, and none
+      // exists for this collection. Sorting client-side below avoids
+      // that requirement entirely, which is fine since each client only
+      // ever has a small number of entries.
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
-        setEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // "date" is stored as "YYYY-MM-DD", so a plain string compare
+        // sorts chronologically — newest first.
+        rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        setEntries(rows);
         setLoading(false);
       },
       (err) => {
         console.error(err);
-        setError(
-          "Couldn't load weight history. If this is the first time, Firestore may ask you to create an index — check the browser console for a link."
-        );
+        setError("Couldn't load weight history. Check your connection and try again.");
         setLoading(false);
       }
     );

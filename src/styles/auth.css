@@ -40,7 +40,7 @@
 ════════════════════════════════ */
 .card-top {
   position: relative;
-  min-height: 270px;
+  min-height: 340px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -97,7 +97,6 @@
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 99px;
   padding: 5px 13px 5px 5px;
-  margin-bottom: 20px;
   width: fit-content;
 }
 
@@ -115,6 +114,12 @@
 }
 
 .ct-brand-name { font-size: 13px; font-weight: 700; }
+.ct-brand-top {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  z-index: 2;
+}
 
 /* ── Tagline ── */
 .ct-tagline {
