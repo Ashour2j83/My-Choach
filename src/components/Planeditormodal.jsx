@@ -151,6 +151,7 @@ export default function PlanEditorModal({ user, onClose }) {
     try {
       const planRef = doc(db, "plans", user.id);
       const payload = {
+        userId: user.id, // ← the field UserPage.jsx actually queries by
         breakfast: stripRowIds(plan.breakfast),
         snack1: stripRowIds(plan.snack1),
         lunch: stripRowIds(plan.lunch),
@@ -165,6 +166,8 @@ export default function PlanEditorModal({ user, onClose }) {
 
       if (docExists) {
         // Document already exists for this UID — update in place.
+        // This also backfills userId onto plans that were saved before
+        // this field existed.
         await updateDoc(planRef, payload);
       } else {
         // No plan yet for this user — create it, with doc ID == user UID.
