@@ -31,9 +31,6 @@
 
 body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
 
-/* ════════════════════════════════
-   LOADING
-════════════════════════════════ */
 .up-loading {
   min-height: 100vh;
   display: flex;
@@ -51,9 +48,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ════════════════════════════════
-   ROOT
-════════════════════════════════ */
 .up-root {
   display: flex;
   flex-direction: column;
@@ -66,9 +60,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   position: relative;
 }
 
-/* ════════════════════════════════
-   SHELL (sidebar + main)
-════════════════════════════════ */
 .up-shell {
   display: flex;
   min-height: 100vh;
@@ -87,8 +78,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   min-height: 100dvh;
   position: relative;
 }
-
-.up-root { max-width: 500px; margin: 0 auto; width: 100%; }
 
 /* ════════════════════════════════
    TOPBAR
@@ -212,7 +201,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 ════════════════════════════════ */
 .hero-photo {
   position: relative;
-  height: 240px;
+  height: 260px;
   border-radius: 24px;
   overflow: hidden;
   background: var(--s1);
@@ -224,21 +213,41 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 68%;
+  object-position: center 15%;
+  transition: opacity 0.2s ease;
 }
 
+/* Darken the TOP-LEFT where the welcome text now lives, keep the rest
+   of the photo (the coach's face) clear. */
 .hero-photo::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(9,8,13,0) 0%, rgba(9,8,13,0.55) 55%, rgba(9,8,13,0.97) 100%);
+  pointer-events: none;
+  background:
+    linear-gradient(115deg,
+      rgba(9,8,13,0.90) 0%,
+      rgba(9,8,13,0.68) 34%,
+      rgba(9,8,13,0)    62%),
+    linear-gradient(180deg,
+      rgba(9,8,13,0.55) 0%,
+      rgba(9,8,13,0.05) 38%,
+      rgba(9,8,13,0.25) 100%);
 }
 
+/* *** Welcome header: pinned top-left on every breakpoint *** */
 .hero-photo-content {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: 18px 20px 20px;
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  width: 64%;
+  padding: 18px 18px 0 20px;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .hero-greet {
@@ -251,38 +260,92 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 
 .hero-photo-name {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   letter-spacing: -0.6px;
   color: #fff;
   margin-top: 2px;
+  line-height: 1.15;
 }
 
 .hero-photo-line {
   font-family: 'Inter', sans-serif;
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: rgba(255,255,255,0.75);
   margin-top: 5px;
-  max-width: 85%;
+  max-width: 100%;
   line-height: 1.5;
 }
 
 .hero-photo-badges {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 10px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .hero-badge {
   font-family: 'Inter', sans-serif;
-  font-size: 10.5px; font-weight: 700;
-  padding: 6px 12px;
+  font-size: 10px; font-weight: 700;
+  padding: 5px 10px;
   border-radius: 99px;
   backdrop-filter: blur(6px);
 }
 .hero-badge.active { background: rgba(255,107,53,0.85); color: #fff; }
 .hero-badge.goal   { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+
+/* ── Change-photo button (bottom-right of the hero image) ──
+   A small frosted-glass circular button with a camera icon. Turns
+   into the brand gradient on hover, and swaps to a spinner while the
+   upload is in flight. */
+.hero-photo-edit-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.28);
+  background: rgba(9,8,13,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.hero-photo-edit-btn svg { width: 18px; height: 18px; }
+.hero-photo-edit-btn:hover:not(:disabled) {
+  background: var(--grad);
+  border-color: transparent;
+  transform: scale(1.07);
+}
+.hero-photo-edit-btn:active:not(:disabled) { transform: scale(0.94); }
+.hero-photo-edit-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+.hpe-spinner {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+.hero-photo-error {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #ff8080;
+  background: rgba(255,107,107,0.1);
+  border: 1px solid rgba(255,107,107,0.28);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: -2px;
+}
 
 /* ════════════════════════════════
    FLOATING STAT STRIP
@@ -383,7 +446,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .psb-mval { font-size: 14px; font-weight: 700; }
 
 /* ════════════════════════════════
-   MEAL ROWS (one alternative + Change)
+   MEAL ROWS
 ════════════════════════════════ */
 .meal-rows-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -410,9 +473,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .meal-row-name { font-size: 13px; font-weight: 700; }
 .meal-row-kcal { font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 700; margin-top: 2px; }
 
-.meal-row-food {
-  flex: 1; min-width: 200px;
-}
+.meal-row-food { flex: 1; min-width: 200px; }
 
 .meal-row-food-list {
   list-style: none;
@@ -470,18 +531,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .dt-mval { font-size: 14px; font-weight: 700; }
 .dt-ring { width: 60px; height: 60px; margin-left: auto; flex-shrink: 0; }
 
-/* ════════════════════════════════
-   DESKTOP — bigger rows, divider before Change
-════════════════════════════════ */
 @media (min-width: 1024px) {
   .meal-row { padding: 18px 20px; border-radius: 22px; gap: 16px; }
   .meal-row-icon { width: 52px; height: 52px; font-size: 24px; }
   .meal-row-food-list li { font-size: 14.5px; }
-  .meal-row-change {
-    padding: 8px 0 8px 20px;
-    border-left: 1px solid var(--border);
-    font-size: 13px;
-  }
+  .meal-row-change { padding: 8px 0 8px 20px; border-left: 1px solid var(--border); font-size: 13px; }
   .plan-summary-bar { padding: 20px 24px; }
   .daily-total-card { padding: 20px 24px; }
   .dt-ring { width: 68px; height: 68px; }
@@ -493,7 +547,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .fm.carb { background: rgba(77,159,255,0.12); color: var(--blue); }
 .fm.fat  { background: rgba(255,183,77,0.12); color: var(--gold); }
 
-
 .plan-extras {
   background: var(--s1); border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
 }
@@ -503,17 +556,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .pe-val   { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--text); line-height: 1.6; }
 
 /* ════════════════════════════════
-   RECIPES — list cards
+   RECIPES
 ════════════════════════════════ */
-.recipes-u-header {
-  display: flex; align-items: baseline; justify-content: space-between;
-}
+.recipes-u-header { display: flex; align-items: baseline; justify-content: space-between; }
 
-.recipes-u-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.recipes-u-grid { display: flex; flex-direction: column; gap: 12px; }
 
 .recipe-card-u {
   background: var(--s1);
@@ -532,38 +579,29 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .recipe-card-u:hover { border-color: var(--border2); transform: translateY(-1px); }
 
 .recipe-card-u-img {
-  width: 92px;
-  height: 92px;
+  width: 92px; height: 92px;
   flex-shrink: 0;
   background: var(--s2);
   display: flex; align-items: center; justify-content: center;
   font-size: 26px;
 }
-.recipe-card-u-img img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-}
+.recipe-card-u-img img { width: 100%; height: 100%; object-fit: cover; }
 
 .recipe-card-u-body {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex: 1; min-width: 0;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 4px;
 }
 
 .recipe-card-u-meal {
   font-family: 'Inter', sans-serif;
   font-size: 9.5px; font-weight: 700;
   color: var(--orange);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
 
 .recipe-card-u-title {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 14px; font-weight: 700;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -572,23 +610,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 
 .recipe-card-u-ingr {
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 11px; color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.recipe-card-u-macros {
-  display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px;
-}
+.recipe-card-u-macros { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
 
 .recipe-card-u-arrow {
-  flex-shrink: 0;
-  color: var(--muted);
-  padding: 0 14px;
-  display: flex;
+  flex-shrink: 0; color: var(--muted);
+  padding: 0 14px; display: flex;
   transform: rotate(-90deg);
 }
 .recipe-card-u-arrow svg { width: 15px; height: 15px; }
@@ -618,21 +651,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px);
   z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  display: flex; align-items: flex-end; justify-content: center;
   animation: fadeIn 0.15s ease;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .rmodal-sheet {
   background: var(--s1);
-  width: 100%;
-  max-width: 480px;
-  max-height: 88vh;
+  width: 100%; max-width: 480px; max-height: 88vh;
   border-radius: 26px 26px 0 0;
-  overflow-y: auto;
-  position: relative;
+  overflow-y: auto; position: relative;
   animation: slideUp 0.22s cubic-bezier(.2,.8,.2,1);
   scrollbar-width: none;
 }
@@ -649,11 +677,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 .rmodal-close svg { width: 15px; height: 15px; }
 
-.rmodal-img-wrap {
-  position: relative;
-  height: 220px;
-  background: var(--s2);
-}
+.rmodal-img-wrap { position: relative; height: 220px; background: var(--s2); }
 .rmodal-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
 .rmodal-img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 46px; }
 
@@ -666,21 +690,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 }
 
 .rmodal-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
-
 .rmodal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.35; }
 
-.rmodal-macros {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
+.rmodal-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .rmodal-macro {
-  background: var(--s2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 6px;
-  text-align: center;
-  display: flex; flex-direction: column; gap: 3px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 6px;
+  text-align: center; display: flex; flex-direction: column; gap: 3px;
 }
 .rmm-val { font-size: 14px; font-weight: 800; }
 .rmm-val.cal  { color: var(--orange); }
@@ -696,16 +712,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   margin-bottom: 10px;
 }
 
-.rmodal-ingr-list {
-  list-style: none;
-  display: flex; flex-direction: column; gap: 9px;
-}
+.rmodal-ingr-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
 .rmodal-ingr-list li {
   font-family: 'Inter', sans-serif;
-  font-size: 13px; line-height: 1.6;
-  color: var(--text);
-  padding-left: 16px;
-  position: relative;
+  font-size: 13px; line-height: 1.6; color: var(--text);
+  padding-left: 16px; position: relative;
 }
 .rmodal-ingr-list li::before {
   content: '';
@@ -717,17 +728,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 /* ════════════════════════════════
    PROGRESS TAB
 ════════════════════════════════ */
-.prog-summary {
-  display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px;
-}
+.prog-summary { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; }
 
 .ps-card {
   background: var(--s1); border: 1px solid var(--border); border-radius: 16px;
   padding: 14px; text-align: center;
 }
-.ps-card.highlight {
-  background: rgba(255,107,53,0.05); border-color: rgba(255,107,53,0.25);
-}
+.ps-card.highlight { background: rgba(255,107,53,0.05); border-color: rgba(255,107,53,0.25); }
 
 .ps-label {
   font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
@@ -737,19 +744,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .ps-val.green  { color: var(--green); }
 .ps-val.orange { color: var(--orange); }
 
-.chart-card {
-  background: var(--s1); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
-}
+.chart-card { background: var(--s1); border: 1px solid var(--border); border-radius: 20px; padding: 18px; }
 
 /* ════════════════════════════════
-   WEIGHT PROGRESS CARD (redesigned)
+   WEIGHT PROGRESS CARD
 ════════════════════════════════ */
-.wp-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 20px;
-}
+.wp-card { background: var(--s1); border: 1px solid var(--border); border-radius: 22px; padding: 20px; }
 
 .wp-card-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -776,50 +776,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   padding: 40px 10px; text-align: center;
 }
 
-/* Chart + right summary grid (used both in overview mini-chart and progress tab) */
-.wc-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
+.wc-grid { display: flex; flex-direction: column; gap: 18px; }
 .wc-chart-col { width: 100%; }
-.wc-svg {
-  width: 100%;
-  aspect-ratio: 560 / 220;
-  height: auto;
-  display: block;
-  overflow: visible;
-}
+.wc-svg { width: 100%; aspect-ratio: 560 / 220; height: auto; display: block; overflow: visible; }
 
-/* ── chart entrance animations ── */
-.wc-area {
-  opacity: 0;
-  animation: wc-fade-in 1s ease 0.15s forwards;
-}
-.wc-gridline {
-  opacity: 0;
-  animation: wc-fade-in 0.6s ease forwards;
-}
-.wc-line {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: wc-draw 1.3s cubic-bezier(.22,.61,.36,1) 0.1s forwards;
-}
-.wc-dot {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: wc-pop 0.45s cubic-bezier(.34,1.56,.64,1) forwards;
-}
-.wc-dot.is-last {
-  animation:
-    wc-pop 0.45s cubic-bezier(.34,1.56,.64,1) forwards,
-    wc-pulse 2.2s ease-in-out 1.3s infinite;
-}
-.wc-val-label, .wc-date-label {
-  opacity: 0;
-  animation: wc-fade-in 0.5s ease forwards;
-}
+.wc-area { opacity: 0; animation: wc-fade-in 1s ease 0.15s forwards; }
+.wc-gridline { opacity: 0; animation: wc-fade-in 0.6s ease forwards; }
+.wc-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wc-draw 1.3s cubic-bezier(.22,.61,.36,1) 0.1s forwards; }
+.wc-dot { opacity: 0; transform-box: fill-box; transform-origin: center; animation: wc-pop 0.45s cubic-bezier(.34,1.56,.64,1) forwards; }
+.wc-dot.is-last { animation: wc-pop 0.45s cubic-bezier(.34,1.56,.64,1) forwards, wc-pulse 2.2s ease-in-out 1.3s infinite; }
+.wc-val-label, .wc-date-label { opacity: 0; animation: wc-fade-in 0.5s ease forwards; }
 
 @keyframes wc-draw     { to { stroke-dashoffset: 0; } }
 @keyframes wc-fade-in  { to { opacity: 1; } }
@@ -831,16 +797,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 
 @media (prefers-reduced-motion: reduce) {
   .wc-area, .wc-gridline, .wc-line, .wc-dot, .wc-val-label, .wc-date-label {
-    animation: none !important;
-    opacity: 1 !important;
-    stroke-dashoffset: 0 !important;
+    animation: none !important; opacity: 1 !important; stroke-dashoffset: 0 !important;
   }
 }
 
-.wc-summary-col {
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-}
+.wc-summary-col { border-top: 1px solid var(--border); padding-top: 16px; }
 .wc-summary-lbl { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); }
 .wc-summary-val { font-size: 30px; font-weight: 900; letter-spacing: -1px; margin-top: 4px; }
 .wc-summary-val span { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 3px; }
@@ -853,23 +814,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .wc-summary-delta.up   { color: var(--orange); background: rgba(255,107,53,0.1); }
 .wc-summary-sub { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 6px; }
 
-/* Metrics grid */
-.wp-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.metric-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px;
-}
-.metric-icon {
-  width: 40px; height: 40px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; margin-bottom: 12px;
-}
+.wp-metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.metric-card { background: var(--s1); border: 1px solid var(--border); border-radius: 18px; padding: 16px; }
+.metric-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; margin-bottom: 12px; }
 .metric-icon.violet { background: rgba(179,136,255,0.12); }
 .metric-icon.coral  { background: rgba(255,92,138,0.12); }
 .metric-icon.blue   { background: rgba(77,159,255,0.12); }
@@ -877,20 +824,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .metric-lbl { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); }
 .metric-val { font-size: 21px; font-weight: 800; margin-top: 4px; }
 .metric-unit { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 2px; }
-.metric-delta {
-  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
-  margin-top: 6px;
-}
+.metric-delta { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; margin-top: 6px; }
 .metric-delta.down { color: var(--green); }
 .metric-delta.up   { color: var(--orange); }
 
-.wp-note {
-  display: flex; align-items: center; gap: 8px;
-  font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted);
-  padding: 4px 2px;
-}
+.wp-note { display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); padding: 4px 2px; }
 
-/* Desktop: chart + summary side by side, 4 metrics in one row */
 @media (min-width: 768px) {
   .wc-grid { flex-direction: row; align-items: stretch; }
   .wc-chart-col { flex: 1; min-width: 0; }
@@ -903,15 +842,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   .wp-metrics-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-.wc-header {
-  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;
-}
+.wc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
 .wc-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
 .wc-dates { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--muted); }
-.wc-badge {
-  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 800;
-  padding: 5px 12px; border-radius: 99px; flex-shrink: 0;
-}
+.wc-badge { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 800; padding: 5px 12px; border-radius: 99px; flex-shrink: 0; }
 .wc-badge.down { color: var(--green);  background: rgba(0,230,118,0.1); }
 .wc-badge.up   { color: var(--orange); background: rgba(255,107,53,0.1); }
 
@@ -928,11 +862,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .ht-arrow.open { transform: rotate(180deg); }
 
 .wh-list { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-.wh-row {
-  display: grid; grid-template-columns: auto 1fr auto;
-  align-items: center; gap: 12px; padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
+.wh-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .wh-row:last-child { border-bottom: none; }
 .wh-date { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .wh-vals { display: flex; align-items: center; gap: 8px; }
@@ -946,25 +876,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 /* ════════════════════════════════
    EMPTY STATE
 ════════════════════════════════ */
-.empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 60px 24px; text-align: center; gap: 12px;
-}
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; gap: 12px; }
 .es-icon  { font-size: 50px; }
 .es-title { font-size: 18px; font-weight: 800; }
 .es-sub   { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 260px; }
 
-.loading-row {
-  padding: 40px; text-align: center; color: var(--muted);
-  font-family: 'Inter', sans-serif; font-size: 13px;
-}
+.loading-row { padding: 40px; text-align: center; color: var(--muted); font-family: 'Inter', sans-serif; font-size: 13px; }
 
 /* ════════════════════════════════
    INACTIVE SCREEN
 ════════════════════════════════ */
-.inactive-screen {
-  flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px;
-}
+.inactive-screen { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
 .inactive-card {
   width: 100%; max-width: 340px;
   background: var(--s1); border: 1px solid var(--border);
@@ -972,81 +894,53 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
   position: relative; overflow: hidden;
 }
 .inactive-card::before {
-  content: '';
-  position: absolute; inset: 0;
+  content: ''; position: absolute; inset: 0;
   background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.08), transparent);
   pointer-events: none;
 }
 .ic-visual { position: relative; width: 96px; height: 96px; margin: 0 auto 24px; }
-.ic-ring-outer {
-  width: 96px; height: 96px; border-radius: 50%;
-  border: 1px solid rgba(255,107,53,0.2);
-  display: flex; align-items: center; justify-content: center;
-}
-.ic-ring-inner {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: rgba(255,107,53,0.08);
-  border: 1px solid rgba(255,107,53,0.15);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 30px;
-}
-.ic-pulse {
-  position: absolute; inset: -16px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%);
-}
+.ic-ring-outer { width: 96px; height: 96px; border-radius: 50%; border: 1px solid rgba(255,107,53,0.2); display: flex; align-items: center; justify-content: center; }
+.ic-ring-inner { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.15); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.ic-pulse { position: absolute; inset: -16px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%); }
 .ic-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 10px; position: relative; z-index: 1; }
 .ic-sub   { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--muted); line-height: 1.75; margin-bottom: 28px; position: relative; z-index: 1; }
 .ic-cta {
   display: inline-flex; align-items: center; gap: 10px;
   background: #25d366; color: #fff;
-  font-size: 14px; font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;
   padding: 14px 24px; border-radius: 16px; text-decoration: none;
   box-shadow: 0 8px 24px rgba(37,211,102,0.3);
-  transition: opacity 0.2s, transform 0.15s;
-  position: relative; z-index: 1;
+  transition: opacity 0.2s, transform 0.15s; position: relative; z-index: 1;
 }
 .ic-cta:hover { opacity: 0.9; transform: translateY(-1px); }
 .ic-cta-icon { width: 20px; height: 20px; flex-shrink: 0; }
 .ic-cta-icon svg { width: 100%; height: 100%; }
 
 /* ════════════════════════════════
-   FLOATING BOTTOM NAV (mobile only)
+   FLOATING BOTTOM NAV
 ════════════════════════════════ */
 .up-bottom-nav {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  max-width: 460px;
-  width: calc(100% - 32px);
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 100; max-width: 460px; width: calc(100% - 32px);
 }
 
 .bn-track {
   display: flex; gap: 4px;
   background: rgba(17,16,24,0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 99px;
-  padding: 6px;
+  border-radius: 99px; padding: 6px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
 }
 
 .bn-btn {
-  flex: 1;
-  display: flex; align-items: center; justify-content: center;
-  gap: 7px;
-  padding: 11px 14px;
-  border-radius: 99px;
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 14px; border-radius: 99px;
   border: none; background: transparent;
   color: rgba(242,238,250,0.35);
-  font-size: 12px; font-weight: 600;
-  cursor: pointer;
+  font-size: 12px; font-weight: 600; cursor: pointer;
   transition: color 0.2s, background 0.2s, box-shadow 0.2s;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  white-space: nowrap;
+  font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap;
 }
 .bn-btn.active { background: var(--grad); color: #fff; box-shadow: 0 4px 16px rgba(255,61,113,0.35); }
 .bn-icon { display: flex; align-items: center; }
@@ -1055,9 +949,36 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 @media (min-width: 380px) { .bn-lbl { display: inline; } }
 
 /* ════════════════════════════════
-   DESKTOP  ≥ 1024px — sidebar layout (matches reference)
+   DESKTOP ≥ 1024px
 ════════════════════════════════ */
 @media (min-width: 1024px) {
+
+  /* Hero: a bit shorter/wider proportion looks better once the text
+     block is anchored top-left instead of spanning the full height. */
+  .hero-photo { height: 340px; }
+  .hero-photo-img { object-position: center 20%; }
+
+  .hero-photo-content {
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    max-width: 440px;
+    padding: 30px 34px 0;
+  }
+  .hero-photo-name { font-size: 32px; }
+  .hero-photo-line { max-width: 100%; font-size: 13px; }
+
+  .hero-photo-edit-btn {
+    width: 46px;
+    height: 46px;
+    right: 20px;
+    bottom: 20px;
+  }
+  .hero-photo-edit-btn svg { width: 20px; height: 20px; }
+
+  /* Sidebar */
   .up-sidebar {
     display: flex;
     flex-direction: column;
@@ -1092,16 +1013,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 
   .up-bottom-nav { display: none; }
 
-  .up-root,
-  .up-topbar,
-  .up-tab-content { max-width: none; }
-
+  .up-root, .up-topbar, .up-tab-content { max-width: none; }
   .up-topbar { padding: 0 36px; }
   .up-tab-content { max-width: 1040px; margin: 0 auto; padding: 26px 36px 40px; gap: 18px; }
-
-  .hero-photo { height: 300px; }
-  .hero-photo-name { font-size: 32px; }
-  .hero-photo-line { font-size: 13.5px; max-width: 60%; }
 
   .stat-strip { grid-template-columns: repeat(4, 1fr); margin-top: -40px; gap: 12px; }
   .stat-chip { padding: 16px 10px 14px; border-radius: 18px; }
@@ -1130,3 +1044,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 [dir="rtl"] .rmodal-close { right: auto; left: 14px; }
 [dir="rtl"] .meal-row-food-list li { padding-left: 0; padding-right: 13px; }
 [dir="rtl"] .meal-row-food-list li::before { left: auto; right: 0; }
+[dir="rtl"] .hero-photo-content { left: auto; right: 0; }
+[dir="rtl"] .hero-photo-edit-btn { right: auto; left: 14px; }
+@media (min-width: 1024px) {
+  [dir="rtl"] .hero-photo-edit-btn { left: 20px; }
+}

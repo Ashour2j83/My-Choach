@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -21,6 +21,7 @@ const Icon = {
   globe:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
   droplet: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13z"/></svg>,
   muscle:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 4v3a3 3 0 0 0 3 3h1a3 3 0 0 1 3 3v1a3 3 0 0 0 3 3h2"/><path d="M18 4v3M20 6h-4"/></svg>,
+  camera:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
 };
 
 const MEAL_META = {
@@ -65,6 +66,38 @@ function formatChartDate(dateStr) {
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/* ── Resize + compress an image file in the browser before upload ──
+   Keeps the payload well under Vercel's request-size limit and speeds
+   up upload on slow mobile connections. Returns a base64 data URI. */
+function resizeImageFile(file, maxDim = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height >= width && height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("Couldn't read image"));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("Couldn't read file"));
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ── WEIGHT CHART (violet, smooth curve, animated) ── */
@@ -511,6 +544,49 @@ export default function UserPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [selected,    setSelected]    = useState({});
 
+  /* ── Profile photo upload ── */
+  const fileInputRef = useRef(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [localImg,       setLocalImg]       = useState(null); // instant preview after a successful upload
+  const [uploadError,    setUploadError]    = useState("");
+
+  async function handlePhotoSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file again later
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please choose an image file.");
+      return;
+    }
+
+    setUploadError("");
+    setUploadingPhoto(true);
+    try {
+      const dataUrl = await resizeImageFile(file);
+      const idToken = await user.getIdToken();
+
+      const resp = await fetch("/api/upload-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Upload failed");
+
+      setLocalImg(data.url);
+    } catch (err) {
+      console.error(err);
+      setUploadError("Couldn't upload photo. Try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   function handleMealChange(mealKey, idx) {
     setSelected(s => ({ ...s, [mealKey]: idx }));
   }
@@ -601,6 +677,7 @@ export default function UserPage() {
   const prevWeight = weights.length > 1 ? weights[weights.length - 2] : null;
   const initial    = userData?.name?.charAt(0).toUpperCase() || "U";
   const firstName  = userData?.name?.split(" ")[0] || "there";
+  const profilePhoto = localImg || userData?.img || "/coach.png";
 
   const weeksSpan = weights.length >= 2
     ? Math.max(1, Math.round((new Date(weights[weights.length - 1].date) - new Date(weights[0].date)) / (7 * 24 * 3600 * 1000)))
@@ -664,7 +741,25 @@ export default function UserPage() {
             <div className="up-tab-content" style={{ paddingTop: 0 }}>
 
               <div className="hero-photo">
-                <img src="/coach.jpg" alt="" className="hero-photo-img" />
+                <img src={profilePhoto} alt="" className="hero-photo-img" />
+
+                <button
+                  type="button"
+                  className="hero-photo-edit-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  title="Change photo"
+                >
+                  {uploadingPhoto ? <span className="hpe-spinner" /> : Icon.camera}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelected}
+                  style={{ display: "none" }}
+                />
+
                 <div className="hero-photo-content">
                   <div className="hero-greet">{t("welcomeBack")}</div>
                   <div className="hero-photo-name">{firstName} 👋</div>
@@ -675,6 +770,8 @@ export default function UserPage() {
                   </div>
                 </div>
               </div>
+
+              {uploadError && <div className="hero-photo-error">{uploadError}</div>}
 
               <div className="stat-strip">
                 <div className="stat-chip">
@@ -821,7 +918,7 @@ export default function UserPage() {
           {/* ════════ RECIPES ════════ */}
           {tab === "recipes" && <RecipesSection/>}
 
-          {/* ════════ PROGRESS (redesigned) ════════ */}
+          {/* ════════ PROGRESS ════════ */}
           {tab === "progress" && (
             <div className="up-tab-content">
               {weights.length === 0 ? (
