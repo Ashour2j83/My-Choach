@@ -144,14 +144,17 @@
   line-height: 1.5;
 }
 
-/* ── Coach strip ── */
+/* ── Coach strip ──
+   Fully transparent on purpose — this now sits directly over the
+   video, and the point is to see the footage through it clearly, not
+   behind a frosted panel. Just a border for definition + a text
+   shadow so the words stay readable over moving footage. */
 .ct-coach {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(12,10,9,0.65);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,107,53,0.18);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 14px;
   padding: 10px 14px;
   margin-bottom: 12px;
@@ -171,12 +174,12 @@
 }
 
 .ct-coach-info  { flex: 1; min-width: 0; }
-.ct-coach-name  { font-size: 13px; font-weight: 700; }
-.ct-coach-title { font-family: 'Inter', sans-serif; font-size: 10px; color: rgba(240,235,230,0.4); margin-top: 1px; }
+.ct-coach-name  { font-size: 13px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
+.ct-coach-title { font-family: 'Inter', sans-serif; font-size: 10px; color: rgba(240,235,230,0.75); margin-top: 1px; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
 
 .ct-coach-stats { display: flex; gap: 14px; flex-shrink: 0; }
-.ct-coach-stat .sv { font-size: 14px; font-weight: 800; color: #ff8a5b; line-height: 1; }
-.ct-coach-stat .sl { font-family: 'Inter', sans-serif; font-size: 9px; color: rgba(240,235,230,0.3); margin-top: 2px; white-space: nowrap; }
+.ct-coach-stat .sv { font-size: 14px; font-weight: 800; color: #ff8a5b; line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
+.ct-coach-stat .sl { font-family: 'Inter', sans-serif; font-size: 9px; color: rgba(240,235,230,0.65); margin-top: 2px; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
 
 /* ── Feature pills ── */
 .ct-pills { display: flex; gap: 7px; flex-wrap: wrap; }

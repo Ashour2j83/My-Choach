@@ -125,15 +125,16 @@ export default function Login() {
       <div className="auth-card">
 
         {/* ── TOP: gym video ── */}
-<div className="card-top">
-  <video
-    className="ct-video"
-    src="/video.mp4"
-    autoPlay
-    muted
-    loop
-    playsInline
-  />          <div className="card-top-inner">
+        <div className="card-top">
+          <video
+            className="ct-video"
+            src="/video.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          <div className="card-top-inner">
 
             <div className="ct-brand">
               <div className="ct-brand-icon">🏋️</div>
@@ -145,6 +146,20 @@ export default function Login() {
             </div>
             <div className="ct-desc">
               Everything Bahaa built for you — waiting on the other side.
+            </div>
+
+            {/* Coach identity box now sits over the video too, so the
+                footage stays visible behind it all the way down. */}
+            <div className="ct-coach">
+              <div className="ct-coach-av">🏋️</div>
+              <div className="ct-coach-info">
+                <div className="ct-coach-name">Coach Bahaa</div>
+                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
+              </div>
+              <div className="ct-coach-stats">
+                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
+                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
+              </div>
             </div>
 
           </div>
@@ -159,17 +174,6 @@ export default function Login() {
           </div>
 
           <div className="cf-coach-block">
-            <div className="ct-coach">
-              <div className="ct-coach-av">🏋️</div>
-              <div className="ct-coach-info">
-                <div className="ct-coach-name">Coach Bahaa</div>
-                <div className="ct-coach-title">Certified Nutrition & Fitness Coach</div>
-              </div>
-              <div className="ct-coach-stats">
-                <div className="ct-coach-stat"><div className="sv">250+</div><div className="sl">Clients</div></div>
-                <div className="ct-coach-stat"><div className="sv">8</div><div className="sl">Years</div></div>
-              </div>
-            </div>
             <div className="ct-pills">
               <div className="ct-pill"><span className="ct-pill-icon">🥗</span> Nutrition Plan</div>
               <div className="ct-pill"><span className="ct-pill-icon">📅</span> Weekly Sessions</div>
