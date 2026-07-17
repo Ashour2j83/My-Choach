@@ -531,7 +531,138 @@ function InactiveScreen() {
     </div>
   );
 }
+/* ── PHOTO CROP MODAL (WhatsApp-style: drag to pan, slider to zoom) ──
+   يعرض الصورة المختارة جوه إطار بنسبة عرض/ارتفاع ثابتة (مستطيل عريض).
+   اليوزر بيسحب عشان يوسّط، وبيستخدم السلايدر عشان يزوم، وبعد التأكيد
+   بيرجعلنا صورة JPEG مقصوصة بدقة ثابتة كـ data URL. */
+const CROP_ASPECT = 16 / 9;   // مستطيل عريض، قريب من شكل صورة الهيرو
+const CROP_OUT_W   = 1200;
+const CROP_OUT_H   = Math.round(CROP_OUT_W / CROP_ASPECT);
 
+function PhotoCropModal({ src, onCancel, onConfirm }) {
+  const frameRef = useRef(null);
+  const imgRef   = useRef(null);
+  const dragRef  = useRef({ dragging: false, startX: 0, startY: 0, startTx: 0, startTy: 0 });
+
+  const [frameSize, setFrameSize] = useState({ w: 0, h: 0 });
+  const [natural,   setNatural]   = useState(null); // { w, h }
+  const [zoom,      setZoom]      = useState(1);
+  const [pos,       setPos]       = useState({ x: 0, y: 0 }); // زاوية الصورة العلوية-الشمال، نسبة للإطار
+
+  useEffect(() => {
+    function measure() {
+      if (!frameRef.current) return;
+      const r = frameRef.current.getBoundingClientRect();
+      setFrameSize({ w: r.width, h: r.height });
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const baseScale = natural && frameSize.w
+    ? Math.max(frameSize.w / natural.w, frameSize.h / natural.h)
+    : 1;
+  const dispW = natural ? natural.w * baseScale * zoom : 0;
+  const dispH = natural ? natural.h * baseScale * zoom : 0;
+
+  function clamp(pt, w, h) {
+    const minX = frameSize.w - w, maxX = 0;
+    const minY = frameSize.h - h, maxY = 0;
+    return {
+      x: Math.min(maxX, Math.max(minX, pt.x)),
+      y: Math.min(maxY, Math.max(minY, pt.y)),
+    };
+  }
+
+  // أول ما نعرف مقاس الصورة الطبيعي ومقاس الإطار، نوسّط الصورة تلقائيًا
+  useEffect(() => {
+    if (!natural || !frameSize.w) return;
+    setPos({ x: (frameSize.w - dispW) / 2, y: (frameSize.h - dispH) / 2 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [natural, frameSize.w, frameSize.h]);
+
+  function handleImgLoad(e) {
+    setNatural({ w: e.target.naturalWidth, h: e.target.naturalHeight });
+  }
+
+  function handleZoomChange(e) {
+    const z = parseFloat(e.target.value);
+    const newDispW = natural.w * baseScale * z;
+    const newDispH = natural.h * baseScale * z;
+    const cx = pos.x + dispW / 2, cy = pos.y + dispH / 2;
+    const next = clamp({ x: cx - newDispW / 2, y: cy - newDispH / 2 }, newDispW, newDispH);
+    setZoom(z);
+    setPos(next);
+  }
+
+  function handlePointerDown(e) {
+    dragRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, startTx: pos.x, startTy: pos.y };
+    e.target.setPointerCapture?.(e.pointerId);
+  }
+  function handlePointerMove(e) {
+    if (!dragRef.current.dragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPos(clamp({ x: dragRef.current.startTx + dx, y: dragRef.current.startTy + dy }, dispW, dispH));
+  }
+  function handlePointerUp() {
+    dragRef.current.dragging = false;
+  }
+
+  function handleConfirm() {
+    const k = 1 / (baseScale * zoom);
+    const sx = -pos.x * k;
+    const sy = -pos.y * k;
+    const sW = frameSize.w * k;
+    const sH = frameSize.h * k;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = CROP_OUT_W;
+    canvas.height = CROP_OUT_H;
+    canvas.getContext("2d").drawImage(imgRef.current, sx, sy, sW, sH, 0, 0, CROP_OUT_W, CROP_OUT_H);
+    onConfirm(canvas.toDataURL("image/jpeg", 0.85));
+  }
+
+  return (
+    <div className="crop-modal-overlay">
+      <div className="crop-modal-sheet">
+        <div className="crop-modal-title">Adjust photo</div>
+
+        <div
+          ref={frameRef}
+          className="crop-frame"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          <img
+            ref={imgRef}
+            src={src}
+            alt=""
+            draggable={false}
+            onLoad={handleImgLoad}
+            className="crop-frame-img"
+            style={{ width: dispW || undefined, height: dispH || undefined, left: pos.x, top: pos.y, opacity: natural ? 1 : 0 }}
+          />
+        </div>
+
+        <input
+          type="range" min="1" max="3" step="0.01"
+          value={zoom} onChange={handleZoomChange}
+          className="crop-zoom-slider"
+          disabled={!natural}
+        />
+
+        <div className="crop-modal-actions">
+          <button type="button" className="crop-btn-cancel" onClick={onCancel}>Cancel</button>
+          <button type="button" className="crop-btn-confirm" onClick={handleConfirm} disabled={!natural}>Use Photo</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 /* ── MAIN ─────────────────────────────────────────────────────── */
 export default function UserPage() {
   const { user, userData, logout } = useAuth();
@@ -550,42 +681,52 @@ export default function UserPage() {
   const [localImg,       setLocalImg]       = useState(null); // instant preview after a successful upload
   const [uploadError,    setUploadError]    = useState("");
 
-  async function handlePhotoSelected(e) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file again later
-    if (!file) return;
+ const [cropSrc, setCropSrc] = useState(null); // object URL — لما تبقى موجودة، مودال الكروب مفتوح
 
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please choose an image file.");
-      return;
-    }
+function handlePhotoSelected(e) {
+  const file = e.target.files?.[0];
+  e.target.value = ""; // allow re-selecting the same file again later
+  if (!file) return;
 
-    setUploadError("");
-    setUploadingPhoto(true);
-    try {
-      const dataUrl = await resizeImageFile(file);
-      const idToken = await user.getIdToken();
-
-      const resp = await fetch("/api/upload-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ image: dataUrl }),
-      });
-
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || "Upload failed");
-
-      setLocalImg(data.url);
-    } catch (err) {
-      console.error(err);
-      setUploadError("Couldn't upload photo. Try again.");
-    } finally {
-      setUploadingPhoto(false);
-    }
+  if (!file.type.startsWith("image/")) {
+    setUploadError("Please choose an image file.");
+    return;
   }
+
+  setUploadError("");
+  setCropSrc(URL.createObjectURL(file));
+}
+
+function handleCropCancel() {
+  if (cropSrc) URL.revokeObjectURL(cropSrc);
+  setCropSrc(null);
+}
+
+async function handleCropConfirm(croppedDataUrl) {
+  if (cropSrc) URL.revokeObjectURL(cropSrc);
+  setCropSrc(null);
+
+  setUploadingPhoto(true);
+  try {
+    const idToken = await user.getIdToken();
+    const resp = await fetch("/api/upload-profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ image: croppedDataUrl }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "Upload failed");
+    setLocalImg(data.url);
+  } catch (err) {
+    console.error(err);
+    setUploadError("Couldn't upload photo. Try again.");
+  } finally {
+    setUploadingPhoto(false);
+  }
+}
 
   function handleMealChange(mealKey, idx) {
     setSelected(s => ({ ...s, [mealKey]: idx }));
@@ -1004,7 +1145,15 @@ export default function UserPage() {
             ))}
           </div>
         </nav>
-      </div>
+   </div>
+
+      {cropSrc && (
+        <PhotoCropModal
+          src={cropSrc}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
 }

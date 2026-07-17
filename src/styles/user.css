@@ -1049,3 +1049,79 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 @media (min-width: 1024px) {
   [dir="rtl"] .hero-photo-edit-btn { left: 20px; }
 }
+/* ════════════════════════════════
+   PHOTO CROP MODAL
+════════════════════════════════ */
+.crop-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+.crop-modal-sheet {
+  width: 100%; max-width: 460px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.crop-modal-title { font-size: 16px; font-weight: 800; text-align: center; }
+
+.crop-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--s2);
+  touch-action: none; /* يمنع سكرول الصفحة أثناء السحب على الموبايل */
+  cursor: grab;
+}
+.crop-frame:active { cursor: grabbing; }
+
+.crop-frame-img {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.crop-zoom-slider {
+  width: 100%;
+  accent-color: var(--orange);
+}
+
+.crop-modal-actions {
+  display: flex; gap: 10px;
+}
+
+.crop-btn-cancel,
+.crop-btn-confirm {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+}
+.crop-btn-cancel {
+  background: var(--s2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+}
+.crop-btn-cancel:hover { border-color: var(--orange); }
+
+.crop-btn-confirm {
+  background: var(--grad);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(255,61,113,0.3);
+}
+.crop-btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
