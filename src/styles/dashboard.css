@@ -1182,3 +1182,49 @@ button { font-family: inherit; cursor: pointer; }
 .status-chip.trusted { background: var(--teal-soft); color: var(--teal); }
 .status-chip.pending { background: var(--amber-soft); color: var(--amber); }
 .status-chip.blocked { background: var(--coral-soft); color: var(--coral); }
+
+/* ════════════════════════════════
+   TOPBAR — compact icon-only mode on mobile
+   (fixes button overlap when AR + Dashboard + user chip + logout
+   all try to fit in one row on small screens)
+════════════════════════════════ */
+@media (max-width: 480px) {
+  .up-topbar { padding: 0 14px; gap: 8px; }
+
+  .up-topbar-right { gap: 6px; }
+
+ 
+
+.up-pref-btn,
+.up-dash-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  gap: 0;
+  font-size: 0; /* يخفي أي نص عادي جوه الزرار حتى لو مش لافّ في span */
+}
+
+  /* شيل اسم اليوزر جوه الـ chip، سيب الأفاتار بس */
+  .up-user-chip span {
+    display: none;
+  }
+  .up-user-chip {
+    padding: 3px;
+    gap: 0;
+  }
+
+  /* اسم البراند "GymCoach" ياخد مساحة كبيرة نسبيًا، اقفله واسيب الأيقونة بس */
+  .up-brand-name {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════
+   VERY SMALL PHONES ≤ 360px
+════════════════════════════════ */
+@media (max-width: 360px) {
+  .up-topbar-right { gap: 4px; }
+  .up-logout { width: 34px; height: 34px; }
+}
