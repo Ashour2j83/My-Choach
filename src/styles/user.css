@@ -1076,7 +1076,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta San
 .crop-frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 16px;
   background: var(--s2);

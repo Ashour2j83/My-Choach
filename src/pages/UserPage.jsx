@@ -531,15 +531,11 @@ function InactiveScreen() {
     </div>
   );
 }
-/* ── PHOTO CROP MODAL (WhatsApp-style: drag to pan, slider to zoom) ──
-   يعرض الصورة المختارة جوه إطار بنسبة عرض/ارتفاع ثابتة (مستطيل عريض).
-   اليوزر بيسحب عشان يوسّط، وبيستخدم السلايدر عشان يزوم، وبعد التأكيد
-   بيرجعلنا صورة JPEG مقصوصة بدقة ثابتة كـ data URL. */
-const CROP_ASPECT = 16 / 9;   // مستطيل عريض، قريب من شكل صورة الهيرو
-const CROP_OUT_W   = 1200;
-const CROP_OUT_H   = Math.round(CROP_OUT_W / CROP_ASPECT);
+const CROP_OUT_W = 1200;
 
-function PhotoCropModal({ src, onCancel, onConfirm }) {
+function PhotoCropModal({ src, aspect, onCancel, onConfirm }) {
+  const cropAspect = aspect || 16 / 9; // fallback لو القياس فشل لأي سبب
+  const cropOutH   = Math.round(CROP_OUT_W / cropAspect);
   const frameRef = useRef(null);
   const imgRef   = useRef(null);
   const dragRef  = useRef({ dragging: false, startX: 0, startY: 0, startTx: 0, startTy: 0 });
@@ -619,8 +615,8 @@ function PhotoCropModal({ src, onCancel, onConfirm }) {
 
     const canvas = document.createElement("canvas");
     canvas.width = CROP_OUT_W;
-    canvas.height = CROP_OUT_H;
-    canvas.getContext("2d").drawImage(imgRef.current, sx, sy, sW, sH, 0, 0, CROP_OUT_W, CROP_OUT_H);
+    canvas.height = cropOutH;
+    canvas.getContext("2d").drawImage(imgRef.current, sx, sy, sW, sH, 0, 0, CROP_OUT_W, cropOutH);
     onConfirm(canvas.toDataURL("image/jpeg", 0.85));
   }
 
@@ -630,13 +626,14 @@ function PhotoCropModal({ src, onCancel, onConfirm }) {
         <div className="crop-modal-title">Adjust photo</div>
 
         <div
-          ref={frameRef}
-          className="crop-frame"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-        >
+  ref={frameRef}
+  className="crop-frame"
+  style={{ aspectRatio: cropAspect }}
+  onPointerDown={handlePointerDown}
+  onPointerMove={handlePointerMove}
+  onPointerUp={handlePointerUp}
+  onPointerCancel={handlePointerUp}
+>
           <img
             ref={imgRef}
             src={src}
@@ -677,15 +674,17 @@ export default function UserPage() {
 
   /* ── Profile photo upload ── */
   const fileInputRef = useRef(null);
+  const heroPhotoRef   = useRef(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [localImg,       setLocalImg]       = useState(null); // instant preview after a successful upload
   const [uploadError,    setUploadError]    = useState("");
 
  const [cropSrc, setCropSrc] = useState(null); // object URL — لما تبقى موجودة، مودال الكروب مفتوح
+ const [cropAspect, setCropAspect] = useState(16 / 9);
 
 function handlePhotoSelected(e) {
   const file = e.target.files?.[0];
-  e.target.value = ""; // allow re-selecting the same file again later
+  e.target.value = "";
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
@@ -694,6 +693,14 @@ function handlePhotoSelected(e) {
   }
 
   setUploadError("");
+
+  // نقيس نسبة عرض/ارتفاع صندوق الهيرو الفعلي دلوقتي (بيختلف بين الموبايل والديسكتوب)
+  // عشان القص يطلع مطابق تمامًا للي هيتعرض بعد كده، على أي حجم شاشة
+  if (heroPhotoRef.current) {
+    const r = heroPhotoRef.current.getBoundingClientRect();
+    if (r.width && r.height) setCropAspect(r.width / r.height);
+  }
+
   setCropSrc(URL.createObjectURL(file));
 }
 
@@ -881,8 +888,8 @@ async function handleCropConfirm(croppedDataUrl) {
           {tab === "overview" && (
             <div className="up-tab-content" style={{ paddingTop: 0 }}>
 
-              <div className="hero-photo">
-                <img src={profilePhoto} alt="" className="hero-photo-img" />
+<div className="hero-photo" ref={heroPhotoRef}>
+  <img src={profilePhoto} alt="" className="hero-photo-img" />
 
                 <button
                   type="button"
@@ -1147,13 +1154,14 @@ async function handleCropConfirm(croppedDataUrl) {
         </nav>
    </div>
 
-      {cropSrc && (
-        <PhotoCropModal
-          src={cropSrc}
-          onCancel={handleCropCancel}
-          onConfirm={handleCropConfirm}
-        />
-      )}
+   {cropSrc && (
+  <PhotoCropModal
+    src={cropSrc}
+    aspect={cropAspect}
+    onCancel={handleCropCancel}
+    onConfirm={handleCropConfirm}
+  />
+)}
     </div>
   );
 }
