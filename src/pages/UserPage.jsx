@@ -682,20 +682,73 @@ export default function UserPage() {
  const [cropSrc, setCropSrc] = useState(null); // object URL — لما تبقى موجودة، مودال الكروب مفتوح
  const [cropAspect, setCropAspect] = useState(16 / 9);
 
+
+function mapUploadError(status, serverMsg) {
+  // Daily limit
+  if (status === 429) {
+    return "You've reached today's photo change limit. Try again tomorrow.";
+  }
+
+  // Session expired / unauthorized
+  if (status === 401) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  // User record missing in Firestore
+  if (status === 404) {
+    return "Unable to find your account.";
+  }
+
+  // Client-side validation errors (400) — map by content, never reveal internals
+  if (status === 400) {
+    const msg = (serverMsg || "").toLowerCase();
+
+    if (msg.includes("no image") || msg.includes("empty")) {
+      return "Please choose an image first.";
+    }
+    if (
+      msg.includes("format") ||
+      msg.includes("unsupported") ||
+      msg.includes("doesn't match") ||
+      msg.includes("declared")
+    ) {
+      return "Only JPG, PNG, WEBP, or GIF images are supported.";
+    }
+    if (msg.includes("2mb") || msg.includes("large") || msg.includes("size")) {
+      return "Image must be under 2MB.";
+    }
+    // Any other 400 — still safe, just say "invalid"
+    return "Please upload a valid image.";
+  }
+
+  // Server errors (500) — never say "Cloudinary" or "Firestore"
+  if (status === 500) {
+    return "Couldn't upload your photo. Please try again.";
+  }
+
+  // Unexpected
+  return "Something went wrong. Please try again later.";
+}
+
+
+/* ════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════ */
+
 function handlePhotoSelected(e) {
   const file = e.target.files?.[0];
   e.target.value = "";
   if (!file) return;
 
-  if (!file.type.startsWith("image/")) {
-    setUploadError("Please choose an image file.");
+  // Client-side type check — same message as the server 400 "format" branch
+  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowed.includes(file.type)) {
+    setUploadError("Only JPG, PNG, WEBP, or GIF images are supported.");
     return;
   }
 
   setUploadError("");
 
-  // نقيس نسبة عرض/ارتفاع صندوق الهيرو الفعلي دلوقتي (بيختلف بين الموبايل والديسكتوب)
-  // عشان القص يطلع مطابق تمامًا للي هيتعرض بعد كده، على أي حجم شاشة
+  // Measure the hero box so the crop matches the display exactly
   if (heroPhotoRef.current) {
     const r = heroPhotoRef.current.getBoundingClientRect();
     if (r.width && r.height) setCropAspect(r.width / r.height);
@@ -704,18 +757,20 @@ function handlePhotoSelected(e) {
   setCropSrc(URL.createObjectURL(file));
 }
 
-function handleCropCancel() {
-  if (cropSrc) URL.revokeObjectURL(cropSrc);
-  setCropSrc(null);
-}
+
+/* ════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════ */
 
 async function handleCropConfirm(croppedDataUrl) {
   if (cropSrc) URL.revokeObjectURL(cropSrc);
   setCropSrc(null);
 
+  setUploadError("");
   setUploadingPhoto(true);
+
   try {
     const idToken = await user.getIdToken();
+
     const resp = await fetch("/api/upload-profile", {
       method: "POST",
       headers: {
@@ -724,12 +779,20 @@ async function handleCropConfirm(croppedDataUrl) {
       },
       body: JSON.stringify({ image: croppedDataUrl }),
     });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "Upload failed");
+
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      // Map to a clean, non-leaky message — never expose Cloudinary / Firestore details
+      setUploadError(mapUploadError(resp.status, data?.error));
+      return;
+    }
+
     setLocalImg(data.url);
-  } catch (err) {
-    console.error(err);
-    setUploadError("Couldn't upload photo. Try again.");
+
+  } catch {
+    // Network failure or JSON parse error — nothing internal to leak
+    setUploadError("Something went wrong. Please try again later.");
   } finally {
     setUploadingPhoto(false);
   }
