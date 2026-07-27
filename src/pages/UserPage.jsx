@@ -523,7 +523,7 @@ function InactiveScreen() {
         </div>
         <div className="ic-title">{t("planPaused")}</div>
         <div className="ic-sub">{t("planPausedSub")}</div>
-        <a href="https://wa.me/201234567890" target="_blank" rel="noreferrer" className="ic-cta">
+        <a href="https://wa.me/201033554250" target="_blank" rel="noreferrer" className="ic-cta">
           <span className="ic-cta-icon">{Icon.whatsapp}</span>
           {t("messageCoach")}
         </a>
