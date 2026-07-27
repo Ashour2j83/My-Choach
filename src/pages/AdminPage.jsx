@@ -298,9 +298,9 @@ function Overview({ stats, users, usersLoading, pendingUsers, planIds, onOpenUse
         </div>
       )}
 
-      <div className="dash-card">
+  <div className="dash-card">
         <div className="card-header"><div className="card-title">👥 Recent Clients</div></div>
-        <ClientsTable users={users.slice(0, 6)} loading={usersLoading} planIds={planIds}
+        <ClientsTable users={users} loading={usersLoading} planIds={planIds}
           onOpenUser={onOpenUser} onOpenPlan={onOpenPlan} onOpenWeight={onOpenWeight} />
       </div>
     </>
